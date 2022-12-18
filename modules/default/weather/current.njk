@@ -1,4 +1,7 @@
-{% if current %}
+{% if current or weatherData %}
+    {% if weatherData %}
+        {% set current = weatherData.current %}
+    {% endif %}
     {% if not config.onlyTemp %}
         <div class="normal medium">
             <span class="wi wi-strong-wind dimmed"></span>
@@ -6,16 +9,12 @@
                 {% if config.useBeaufort %}
                     {{ current.beaufortWindSpeed() | round }}
                 {% else %}
-                    {% if config.useKmh %}
-                        {{ current.kmhWindSpeed() | round }}
-                    {% else %}
-                        {{ current.windSpeed | round }}
-                    {% endif %}
+                    {{ current.windSpeed | round }}
                 {% endif %}
                 {% if config.showWindDirection %}
                     <sup>
                         {% if config.showWindDirectionAsArrow %}
-                            <i class="fas fa-long-arrow-alt-up" style="transform:rotate({{ current.windDirection }}deg);"></i>
+                            <i class="fa fa-long-arrow-up" style="transform:rotate({{ current.windDirection }}deg);"></i>
                         {% else %}
                             {{ current.cardinalWindDirection() | translate }}
                         {% endif %}
@@ -47,7 +46,7 @@
     <div class="normal light indoor">
         {% if config.showIndoorTemperature and indoor.temperature %}
             <div>
-                <span class="fas fa-home"></span>
+                <span class="fa fa-home"></span>
                 <span class="bright">
                     {{ indoor.temperature | roundValue | unit("temperature") | decimalSymbol }}
                 </span>
@@ -55,7 +54,7 @@
         {% endif %}
         {% if config.showIndoorHumidity and indoor.humidity %}
             <div>
-                <span class="fas fa-tint"></span>
+                <span class="fa fa-tint"></span>
                 <span class="bright">
                     {{ indoor.humidity | roundValue | unit("humidity") | decimalSymbol }}
                 </span>
@@ -63,10 +62,10 @@
         {% endif %}
     </div>
     {% if (config.showFeelsLike or config.showPrecipitationAmount) and not config.onlyTemp %}
-        <div class="normal medium feelslike">
+        <div class="normal medium">
             {% if config.showFeelsLike %}
                 <span class="dimmed">
-                    {{ "FEELS" | translate({DEGREE: current.feelsLike() | roundValue | unit("temperature") | decimalSymbol }) }}
+                    {{ "FEELS" | translate }} {{ current.feelsLike() | roundValue | unit("temperature") | decimalSymbol }}
                 </span>
             {% endif %}
             {% if config.showPrecipitationAmount %}
@@ -78,7 +77,7 @@
     {% endif %}
 {% else %}
     <div class="dimmed light small">
-        {{ "LOADING" | translate }}
+        {{ "LOADING" | translate | safe }}
     </div>
 {% endif %}
 

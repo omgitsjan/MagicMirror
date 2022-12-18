@@ -1,10 +1,19 @@
-/* MagicMirror² Test config custom calendar
+/* Magic Mirror Test config custom calendar
  *
- * By Rejas
  * MIT Licensed.
  */
 let config = {
+	port: 8080,
+	ipWhitelist: ["127.0.0.1", "::ffff:127.0.0.1", "::1"],
+
+	language: "en",
 	timeFormat: 12,
+	units: "metric",
+	electronOptions: {
+		webPreferences: {
+			nodeIntegration: true
+		}
+	},
 
 	modules: [
 		{
@@ -13,11 +22,11 @@ let config = {
 			config: {
 				calendars: [
 					{
-						maximumEntries: 4,
-						maximumNumberOfDays: 10000,
 						symbol: "birthday-cake",
 						fullDaySymbol: "calendar-day",
 						recurringSymbol: "undo",
+						maximumEntries: 4,
+						maximumNumberOfDays: 10000,
 						url: "http://localhost:8080/tests/configs/data/calendar_test_icons.ics"
 					}
 				]

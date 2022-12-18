@@ -1,53 +1,54 @@
 /* global io */
 
-/* MagicMirror²
+/* Magic Mirror
  * TODO add description
  *
  * By Michael Teeuw https://michaelteeuw.nl
  * MIT Licensed.
  */
-const MMSocket = function (moduleName) {
+var MMSocket = function (moduleName) {
+	var self = this;
+
 	if (typeof moduleName !== "string") {
 		throw new Error("Please set the module name for the MMSocket.");
 	}
 
-	this.moduleName = moduleName;
+	self.moduleName = moduleName;
 
 	// Private Methods
-	let base = "/";
+	var base = "/";
 	if (typeof config !== "undefined" && typeof config.basePath !== "undefined") {
 		base = config.basePath;
 	}
-	this.socket = io("/" + this.moduleName, {
+	self.socket = io("/" + self.moduleName, {
 		path: base + "socket.io"
 	});
+	var notificationCallback = function () {};
 
-	let notificationCallback = function () {};
-
-	const onevent = this.socket.onevent;
-	this.socket.onevent = (packet) => {
-		const args = packet.data || [];
-		onevent.call(this.socket, packet); // original call
+	var onevent = self.socket.onevent;
+	self.socket.onevent = function (packet) {
+		var args = packet.data || [];
+		onevent.call(this, packet); // original call
 		packet.data = ["*"].concat(args);
-		onevent.call(this.socket, packet); // additional call to catch-all
+		onevent.call(this, packet); // additional call to catch-all
 	};
 
 	// register catch all.
-	this.socket.on("*", (notification, payload) => {
+	self.socket.on("*", function (notification, payload) {
 		if (notification !== "*") {
 			notificationCallback(notification, payload);
 		}
 	});
 
 	// Public Methods
-	this.setNotificationCallback = (callback) => {
+	this.setNotificationCallback = function (callback) {
 		notificationCallback = callback;
 	};
 
-	this.sendNotification = (notification, payload) => {
+	this.sendNotification = function (notification, payload) {
 		if (typeof payload === "undefined") {
 			payload = {};
 		}
-		this.socket.emit(notification, payload);
+		self.socket.emit(notification, payload);
 	};
 };

@@ -1,12 +1,23 @@
-/* MagicMirror² Test calendar calendar
+/* Magic Mirror Test calendar calendar
  *
  * This configuration is a wrong authentication
  *
  * By Rodrigo Ramírez Norambuena https://rodrigoramirez.com
  * MIT Licensed.
  */
-let config = {
+
+var config = {
+	port: 8080,
+	ipWhitelist: ["127.0.0.1", "::ffff:127.0.0.1", "::1"],
+
+	language: "en",
 	timeFormat: 12,
+	units: "metric",
+	electronOptions: {
+		webPreferences: {
+			nodeIntegration: true
+		}
+	},
 
 	modules: [
 		{

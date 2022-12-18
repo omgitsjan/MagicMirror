@@ -1,4 +1,4 @@
-/* MagicMirror²
+/* Magic Mirror
  * Module: HelloWorld
  *
  * By Michael Teeuw https://michaelteeuw.nl

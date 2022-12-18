@@ -1,6 +1,6 @@
 /* global Class */
 
-/* MagicMirror²
+/* Magic Mirror
  * Module: Weather
  *
  * By Michael Teeuw https://michaelteeuw.nl
@@ -8,16 +8,15 @@
  *
  * This class is the blueprint for a weather provider.
  */
-const WeatherProvider = Class.extend({
+var WeatherProvider = Class.extend({
 	// Weather Provider Properties
 	providerName: null,
-	defaults: {},
 
 	// The following properties have accessor methods.
 	// Try to not access them directly.
 	currentWeatherObject: null,
 	weatherForecastArray: null,
-	weatherHourlyArray: null,
+	weatherDataObject: null,
 	fetchedLocationName: null,
 
 	// The following properties will be set automatically.
@@ -58,10 +57,10 @@ const WeatherProvider = Class.extend({
 		Log.warn(`Weather provider: ${this.providerName} does not subclass the fetchWeatherForecast method.`);
 	},
 
-	// This method should start the API request to fetch the weather hourly.
+	// This method should start the API request to fetch the weather forecast.
 	// This method should definitely be overwritten in the provider.
-	fetchWeatherHourly: function () {
-		Log.warn(`Weather provider: ${this.providerName} does not subclass the fetchWeatherHourly method.`);
+	fetchWeatherData: function () {
+		Log.warn(`Weather provider: ${this.providerName} does not subclass the fetchWeatherData method.`);
 	},
 
 	// This returns a WeatherDay object for the current weather.
@@ -75,8 +74,8 @@ const WeatherProvider = Class.extend({
 	},
 
 	// This returns an object containing WeatherDay object(s) depending on the type of call.
-	weatherHourly: function () {
-		return this.weatherHourlyArray;
+	weatherData: function () {
+		return this.weatherDataObject;
 	},
 
 	// This returns the name of the fetched location or an empty string.
@@ -96,9 +95,9 @@ const WeatherProvider = Class.extend({
 		this.weatherForecastArray = weatherForecastArray;
 	},
 
-	// Set the weatherHourlyArray and notify the delegate that new information is available.
-	setWeatherHourly: function (weatherHourlyArray) {
-		this.weatherHourlyArray = weatherHourlyArray;
+	// Set the weatherDataObject and notify the delegate that new information is available.
+	setWeatherData: function (weatherDataObject) {
+		this.weatherDataObject = weatherDataObject;
 	},
 
 	// Set the fetched location name.
@@ -111,45 +110,22 @@ const WeatherProvider = Class.extend({
 		this.delegate.updateAvailable(this);
 	},
 
-	getCorsUrl: function () {
-		if (this.config.mockData || typeof this.config.useCorsProxy === "undefined" || !this.config.useCorsProxy) {
-			return "";
-		} else {
-			return location.protocol + "//" + location.host + "/cors?url=";
-		}
-	},
-
 	// A convenience function to make requests. It returns a promise.
-	fetchData: function (url, method = "GET", type = "json") {
-		url = this.getCorsUrl() + url;
-		const getData = function (mockData) {
-			return new Promise(function (resolve, reject) {
-				if (mockData) {
-					let data = mockData;
-					data = data.substring(1, data.length - 1);
-					resolve(JSON.parse(data));
-				} else {
-					const request = new XMLHttpRequest();
-					request.open(method, url, true);
-					request.onreadystatechange = function () {
-						if (this.readyState === 4) {
-							if (this.status === 200) {
-								if (type === "xml") {
-									resolve(this.responseXML);
-								} else {
-									resolve(JSON.parse(this.response));
-								}
-							} else {
-								reject(request);
-							}
-						}
-					};
-					request.send();
+	fetchData: function (url, method = "GET", data = null) {
+		return new Promise(function (resolve, reject) {
+			var request = new XMLHttpRequest();
+			request.open(method, url, true);
+			request.onreadystatechange = function () {
+				if (this.readyState === 4) {
+					if (this.status === 200) {
+						resolve(JSON.parse(this.response));
+					} else {
+						reject(request);
+					}
 				}
-			});
-		};
-
-		return getData(this.config.mockData);
+			};
+			request.send();
+		});
 	}
 });
 
@@ -178,11 +154,10 @@ WeatherProvider.register = function (providerIdentifier, providerDetails) {
 WeatherProvider.initialize = function (providerIdentifier, delegate) {
 	providerIdentifier = providerIdentifier.toLowerCase();
 
-	const provider = new WeatherProvider.providers[providerIdentifier]();
-	const config = Object.assign({}, provider.defaults, delegate.config);
+	var provider = new WeatherProvider.providers[providerIdentifier]();
 
 	provider.delegate = delegate;
-	provider.setConfig(config);
+	provider.setConfig(delegate.config);
 
 	provider.providerIdentifier = providerIdentifier;
 	if (!provider.providerName) {

@@ -1,24 +1,43 @@
 const helpers = require("./global-setup");
 
-describe("Position of modules", () => {
-	beforeAll((done) => {
-		helpers.startApplication("tests/configs/modules/positions.js");
-		helpers.getDocument(done);
-	});
-	afterAll(async () => {
-		await helpers.stopApplication();
-	});
+const describe = global.describe;
+const it = global.it;
 
-	const positions = ["top_bar", "top_left", "top_center", "top_right", "upper_third", "middle_center", "lower_third", "bottom_left", "bottom_center", "bottom_right", "bottom_bar", "fullscreen_above", "fullscreen_below"];
+describe("Position of modules", function () {
+	helpers.setupTimeout(this);
 
-	for (const position of positions) {
-		const className = position.replace("_", ".");
-		it("should show text in " + position, (done) => {
-			helpers.waitForElement("." + className).then((elem) => {
-				done();
-				expect(elem).not.toBe(null);
-				expect(elem.textContent).toContain("Text in " + position);
-			});
+	var app = null;
+
+	describe("Using helloworld", function () {
+		after(function () {
+			return helpers.stopApplication(app);
 		});
-	}
+
+		before(function () {
+			// Set config sample for use in test
+			process.env.MM_CONFIG_FILE = "tests/configs/modules/positions.js";
+			return helpers
+				.startApplication({
+					args: ["js/electron.js"]
+				})
+				.then(function (startedApp) {
+					app = startedApp;
+				});
+		});
+
+		var positions = ["top_bar", "top_left", "top_center", "top_right", "upper_third", "middle_center", "lower_third", "bottom_left", "bottom_center", "bottom_right", "bottom_bar", "fullscreen_above", "fullscreen_below"];
+
+		var position;
+		var className;
+		for (var idx in positions) {
+			position = positions[idx];
+			className = position.replace("_", ".");
+			it("show text in " + position, function () {
+				return app.client
+					.waitUntilWindowLoaded()
+					.getText("." + className)
+					.should.eventually.equal("Text in " + position);
+			});
+		}
+	});
 });

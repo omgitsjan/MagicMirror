@@ -1,12 +1,12 @@
 /* global translations */
 
-/* MagicMirror²
+/* Magic Mirror
  * Translator (l10n)
  *
  * By Christopher Fenner https://github.com/CFenner
  * MIT Licensed.
  */
-const Translator = (function () {
+var Translator = (function () {
 	/**
 	 * Load a JSON file via XHR.
 	 *
@@ -14,20 +14,12 @@ const Translator = (function () {
 	 * @param {Function} callback Function called when done.
 	 */
 	function loadJSON(file, callback) {
-		const xhr = new XMLHttpRequest();
+		var xhr = new XMLHttpRequest();
 		xhr.overrideMimeType("application/json");
 		xhr.open("GET", file, true);
 		xhr.onreadystatechange = function () {
 			if (xhr.readyState === 4 && xhr.status === 200) {
-				// needs error handler try/catch at least
-				let fileinfo = null;
-				try {
-					fileinfo = JSON.parse(xhr.responseText);
-				} catch (exception) {
-					// nothing here, but don't die
-					Log.error(" loading json file =" + file + " failed");
-				}
-				callback(fileinfo);
+				callback(JSON.parse(xhr.responseText));
 			}
 		};
 		xhr.send(null);
@@ -68,7 +60,7 @@ const Translator = (function () {
 					template = variables.fallback;
 				}
 				return template.replace(new RegExp("{([^}]+)}", "g"), function (_unused, varName) {
-					return varName in variables ? variables[varName] : "{" + varName + "}";
+					return variables[varName] || "{" + varName + "}";
 				});
 			}
 
@@ -103,19 +95,26 @@ const Translator = (function () {
 		 * @param {boolean} isFallback Flag to indicate fallback translations.
 		 * @param {Function} callback Function called when done.
 		 */
-		load(module, file, isFallback, callback) {
-			Log.log(`${module.name} - Load translation${isFallback ? " fallback" : ""}: ${file}`);
-
-			if (this.translationsFallback[module.name]) {
-				callback();
-				return;
+		load: function (module, file, isFallback, callback) {
+			if (!isFallback) {
+				Log.log(module.name + " - Load translation: " + file);
+			} else {
+				Log.log(module.name + " - Load translation fallback: " + file);
 			}
 
-			loadJSON(module.file(file), (json) => {
-				const property = isFallback ? "translationsFallback" : "translations";
-				this[property][module.name] = json;
+			var self = this;
+			if (!this.translationsFallback[module.name]) {
+				loadJSON(module.file(file), function (json) {
+					if (!isFallback) {
+						self.translations[module.name] = json;
+					} else {
+						self.translationsFallback[module.name] = json;
+					}
+					callback();
+				});
+			} else {
 				callback();
-			});
+			}
 		},
 
 		/**
@@ -124,16 +123,18 @@ const Translator = (function () {
 		 * @param {string} lang The language identifier of the core language.
 		 */
 		loadCoreTranslations: function (lang) {
+			var self = this;
+
 			if (lang in translations) {
 				Log.log("Loading core translation file: " + translations[lang]);
-				loadJSON(translations[lang], (translations) => {
-					this.coreTranslations = translations;
+				loadJSON(translations[lang], function (translations) {
+					self.coreTranslations = translations;
 				});
 			} else {
 				Log.log("Configured language not found in core translations.");
 			}
 
-			this.loadCoreTranslationsFallback();
+			self.loadCoreTranslationsFallback();
 		},
 
 		/**
@@ -141,15 +142,20 @@ const Translator = (function () {
 		 * The first language defined in translations.js will be used.
 		 */
 		loadCoreTranslationsFallback: function () {
-			let first = Object.keys(translations)[0];
+			var self = this;
+
+			// The variable `first` will contain the first
+			// defined translation after the following line.
+			for (var first in translations) {
+				break;
+			}
+
 			if (first) {
 				Log.log("Loading core translation fallback file: " + translations[first]);
-				loadJSON(translations[first], (translations) => {
-					this.coreTranslationsFallback = translations;
+				loadJSON(translations[first], function (translations) {
+					self.coreTranslationsFallback = translations;
 				});
 			}
 		}
 	};
 })();
-
-window.Translator = Translator;

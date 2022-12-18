@@ -1,18 +1,19 @@
 /* global Class, cloneObject, Loader, MMSocket, nunjucks, Translator */
 
-/* MagicMirror²
+/* Magic Mirror
  * Module Blueprint.
  * @typedef {Object} Module
  *
  * By Michael Teeuw https://michaelteeuw.nl
  * MIT Licensed.
+ *
  */
-const Module = Class.extend({
+var Module = Class.extend({
 	/*********************************************************
 	 * All methods (and properties) below can be subclassed. *
 	 *********************************************************/
 
-	// Set the minimum MagicMirror² module version for this module.
+	// Set the minimum MagicMirror module version for this module.
 	requiresVersion: "2.0.0",
 
 	// Module config defaults.
@@ -74,22 +75,23 @@ const Module = Class.extend({
 	},
 
 	/**
-	 * Generates the dom which needs to be displayed. This method is called by the MagicMirror² core.
+	 * Generates the dom which needs to be displayed. This method is called by the Magic Mirror core.
 	 * This method can to be subclassed if the module wants to display info on the mirror.
 	 * Alternatively, the getTemplate method could be subclassed.
 	 *
 	 * @returns {HTMLElement|Promise} The dom or a promise with the dom to display.
 	 */
 	getDom: function () {
-		return new Promise((resolve) => {
-			const div = document.createElement("div");
-			const template = this.getTemplate();
-			const templateData = this.getTemplateData();
+		var self = this;
+		return new Promise(function (resolve) {
+			var div = document.createElement("div");
+			var template = self.getTemplate();
+			var templateData = self.getTemplateData();
 
 			// Check to see if we need to render a template string or a file.
 			if (/^.*((\.html)|(\.njk))$/.test(template)) {
 				// the template is a filename
-				this.nunjucksEnvironment().render(template, templateData, function (err, res) {
+				self.nunjucksEnvironment().render(template, templateData, function (err, res) {
 					if (err) {
 						Log.error(err);
 					}
@@ -100,7 +102,7 @@ const Module = Class.extend({
 				});
 			} else {
 				// the template is a template string.
-				div.innerHTML = this.nunjucksEnvironment().renderString(template, templateData);
+				div.innerHTML = self.nunjucksEnvironment().renderString(template, templateData);
 
 				resolve(div);
 			}
@@ -109,7 +111,7 @@ const Module = Class.extend({
 
 	/**
 	 * Generates the header string which needs to be displayed if a user has a header configured for this module.
-	 * This method is called by the MagicMirror² core, but only if the user has configured a default header for the module.
+	 * This method is called by the Magic Mirror core, but only if the user has configured a default header for the module.
 	 * This method needs to be subclassed if the module wants to display modified headers on the mirror.
 	 *
 	 * @returns {string} The header to display above the header.
@@ -141,7 +143,7 @@ const Module = Class.extend({
 	},
 
 	/**
-	 * Called by the MagicMirror² core when a notification arrives.
+	 * Called by the Magic Mirror core when a notification arrives.
 	 *
 	 * @param {string} notification The identifier of the notification.
 	 * @param {*} payload The payload of the notification.
@@ -166,13 +168,15 @@ const Module = Class.extend({
 			return this._nunjucksEnvironment;
 		}
 
+		var self = this;
+
 		this._nunjucksEnvironment = new nunjucks.Environment(new nunjucks.WebLoader(this.file(""), { async: true }), {
 			trimBlocks: true,
 			lstripBlocks: true
 		});
 
-		this._nunjucksEnvironment.addFilter("translate", (str, variables) => {
-			return nunjucks.runtime.markSafe(this.translate(str, variables));
+		this._nunjucksEnvironment.addFilter("translate", function (str) {
+			return self.translate(str);
 		});
 
 		return this._nunjucksEnvironment;
@@ -188,14 +192,14 @@ const Module = Class.extend({
 		Log.log(this.name + " received a socket notification: " + notification + " - Payload: " + payload);
 	},
 
-	/**
+	/*
 	 * Called when the module is hidden.
 	 */
 	suspend: function () {
 		Log.log(this.name + " is suspended.");
 	},
 
-	/**
+	/*
 	 * Called when the module is shown.
 	 */
 	resume: function () {
@@ -209,7 +213,7 @@ const Module = Class.extend({
 	/**
 	 * Set the module data.
 	 *
-	 * @param {object} data The module data
+	 * @param {Module} data The module data
 	 */
 	setData: function (data) {
 		this.data = data;
@@ -224,7 +228,7 @@ const Module = Class.extend({
 	 * Set the module config and combine it with the module defaults.
 	 *
 	 * @param {object} config The combined module config.
-	 * @param {boolean} deep Merge module config in deep.
+	 * @param {boolean} config Merge module config in deep.
 	 */
 	setConfig: function (config, deep) {
 		this.config = deep ? configMerge({}, this.defaults, config) : Object.assign({}, this.defaults, config);
@@ -241,8 +245,9 @@ const Module = Class.extend({
 			this._socket = new MMSocket(this.name);
 		}
 
-		this._socket.setNotificationCallback((notification, payload) => {
-			this.socketNotificationReceived(notification, payload);
+		var self = this;
+		this._socket.setNotificationCallback(function (notification, payload) {
+			self.socketNotificationReceived(notification, payload);
 		});
 
 		return this._socket;
@@ -283,12 +288,13 @@ const Module = Class.extend({
 	 * @param {Function} callback Function called when done.
 	 */
 	loadDependencies: function (funcName, callback) {
-		let dependencies = this[funcName]();
+		var self = this;
+		var dependencies = this[funcName]();
 
-		const loadNextDependency = () => {
+		var loadNextDependency = function () {
 			if (dependencies.length > 0) {
-				const nextDependency = dependencies[0];
-				Loader.loadFile(nextDependency, this, () => {
+				var nextDependency = dependencies[0];
+				Loader.loadFile(nextDependency, self, function () {
 					dependencies = dependencies.slice(1);
 					loadNextDependency();
 				});
@@ -305,33 +311,33 @@ const Module = Class.extend({
 	 *
 	 * @param {Function} callback Function called when done.
 	 */
-	loadTranslations(callback) {
-		const translations = this.getTranslations() || {};
-		const language = config.language.toLowerCase();
+	loadTranslations: function (callback) {
+		var self = this;
+		var translations = this.getTranslations();
+		var lang = config.language.toLowerCase();
 
-		const languages = Object.keys(translations);
-		const fallbackLanguage = languages[0];
-
-		if (languages.length === 0) {
-			callback();
-			return;
+		// The variable `first` will contain the first
+		// defined translation after the following line.
+		for (var first in translations) {
+			break;
 		}
 
-		const translationFile = translations[language];
-		const translationsFallbackFile = translations[fallbackLanguage];
+		if (translations) {
+			var translationFile = translations[lang] || undefined;
+			var translationsFallbackFile = translations[first];
 
-		if (!translationFile) {
-			Translator.load(this, translationsFallbackFile, true, callback);
-			return;
-		}
-
-		Translator.load(this, translationFile, false, () => {
-			if (translationFile !== translationsFallbackFile) {
-				Translator.load(this, translationsFallbackFile, true, callback);
+			// If a translation file is set, load it and then also load the fallback translation file.
+			// Otherwise only load the fallback translation file.
+			if (translationFile !== undefined && translationFile !== translationsFallbackFile) {
+				Translator.load(self, translationFile, false, function () {
+					Translator.load(self, translationsFallbackFile, true, callback);
+				});
 			} else {
-				callback();
+				Translator.load(self, translationsFallbackFile, true, callback);
 			}
-		});
+		} else {
+			callback();
+		}
 	},
 
 	/**
@@ -394,11 +400,12 @@ const Module = Class.extend({
 		callback = callback || function () {};
 		options = options || {};
 
+		var self = this;
 		MM.hideModule(
-			this,
+			self,
 			speed,
-			() => {
-				this.suspend();
+			function () {
+				self.suspend();
 				callback();
 			},
 			options
@@ -421,27 +428,26 @@ const Module = Class.extend({
 		callback = callback || function () {};
 		options = options || {};
 
+		var self = this;
 		MM.showModule(
 			this,
 			speed,
-			() => {
-				this.resume();
-				callback();
+			function () {
+				self.resume();
+				callback;
 			},
 			options
 		);
 	}
 });
 
-/**
- * Merging MagicMirror² (or other) default/config script by @bugsounet
- * Merge 2 objects or/with array
- *
- * Usage:
+/** Merging MagicMirror (or other) default/config script
+ * merge 2 objects or/with array
+ * using:
  * -------
  * this.config = configMerge({}, this.defaults, this.config)
  * -------
- * arg1: initial object
+ * arg1: initial objet
  * arg2: config model
  * arg3: config to merge
  * -------
@@ -450,16 +456,14 @@ const Module = Class.extend({
  * it don't merge all thing in deep
  * -> object in object and array is not merging
  * -------
- *
- * Todo: idea of Mich determinate what do you want to merge or not
- *
- * @param {object} result the initial object
- * @returns {object} the merged config
+ * @bugsounet
+ * @Todo: idea of Mich determinate what do you want to merge or not
  */
-function configMerge(result) {
-	const stack = Array.prototype.slice.call(arguments, 1);
-	let item, key;
 
+function configMerge(result) {
+	var stack = Array.prototype.slice.call(arguments, 1);
+	var item;
+	var key;
 	while (stack.length) {
 		item = stack.shift();
 		for (key in item) {
@@ -487,30 +491,28 @@ Module.create = function (name) {
 		return;
 	}
 
-	const moduleDefinition = Module.definitions[name];
-	const clonedDefinition = cloneObject(moduleDefinition);
+	var moduleDefinition = Module.definitions[name];
+	var clonedDefinition = cloneObject(moduleDefinition);
 
 	// Note that we clone the definition. Otherwise the objects are shared, which gives problems.
-	const ModuleClass = Module.extend(clonedDefinition);
+	var ModuleClass = Module.extend(clonedDefinition);
 
 	return new ModuleClass();
 };
 
 Module.register = function (name, moduleDefinition) {
 	if (moduleDefinition.requiresVersion) {
-		Log.log("Check MagicMirror² version for module '" + name + "' - Minimum version:  " + moduleDefinition.requiresVersion + " - Current version: " + window.mmVersion);
-		if (cmpVersions(window.mmVersion, moduleDefinition.requiresVersion) >= 0) {
+		Log.log("Check MagicMirror version for module '" + name + "' - Minimum version:  " + moduleDefinition.requiresVersion + " - Current version: " + window.version);
+		if (cmpVersions(window.version, moduleDefinition.requiresVersion) >= 0) {
 			Log.log("Version is ok!");
 		} else {
-			Log.warn("Version is incorrect. Skip module: '" + name + "'");
+			Log.log("Version is incorrect. Skip module: '" + name + "'");
 			return;
 		}
 	}
 	Log.log("Module registered: " + name);
 	Module.definitions[name] = moduleDefinition;
 };
-
-window.Module = Module;
 
 /**
  * Compare two semantic version numbers and return the difference.
@@ -521,13 +523,14 @@ window.Module = Module;
  * number if a is smaller and 0 if they are the same
  */
 function cmpVersions(a, b) {
-	const regExStrip0 = /(\.0+)+$/;
-	const segmentsA = a.replace(regExStrip0, "").split(".");
-	const segmentsB = b.replace(regExStrip0, "").split(".");
-	const l = Math.min(segmentsA.length, segmentsB.length);
+	var i, diff;
+	var regExStrip0 = /(\.0+)+$/;
+	var segmentsA = a.replace(regExStrip0, "").split(".");
+	var segmentsB = b.replace(regExStrip0, "").split(".");
+	var l = Math.min(segmentsA.length, segmentsB.length);
 
-	for (let i = 0; i < l; i++) {
-		let diff = parseInt(segmentsA[i], 10) - parseInt(segmentsB[i], 10);
+	for (i = 0; i < l; i++) {
+		diff = parseInt(segmentsA[i], 10) - parseInt(segmentsB[i], 10);
 		if (diff) {
 			return diff;
 		}

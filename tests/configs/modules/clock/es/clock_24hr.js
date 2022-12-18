@@ -1,10 +1,21 @@
-/* MagicMirror² Test config for default clock module
+/* Magic Mirror Test config for default clock module
  *
  * By Rodrigo Ramírez Norambuena https://rodrigoramirez.com
  * MIT Licensed.
  */
-let config = {
+
+var config = {
+	port: 8080,
+	ipWhitelist: ["127.0.0.1", "::ffff:127.0.0.1", "::1"],
+
 	language: "es",
+	timeFormat: 24,
+	units: "metric",
+	electronOptions: {
+		webPreferences: {
+			nodeIntegration: true
+		}
+	},
 
 	modules: [
 		{

@@ -1,97 +1,124 @@
 const helpers = require("../global-setup");
+const expect = require("chai").expect;
 
-/**
- * move similar tests in function doTest
- *
- * @param {string} done test done
- * @param {Array} complimentsArray The array of compliments.
- */
-const doTest = (done, complimentsArray) => {
-	helpers.waitForElement(".compliments").then((elem) => {
-		expect(elem).not.toBe(null);
-		helpers.waitForElement(".module-content").then((elem) => {
-			done();
-			expect(elem).not.toBe(null);
-			expect(complimentsArray).toContain(elem.textContent);
-		});
+const describe = global.describe;
+const it = global.it;
+const beforeEach = global.beforeEach;
+const afterEach = global.afterEach;
+
+describe("Compliments module", function () {
+	helpers.setupTimeout(this);
+
+	var app = null;
+
+	beforeEach(function () {
+		return helpers
+			.startApplication({
+				args: ["js/electron.js"]
+			})
+			.then(function (startedApp) {
+				app = startedApp;
+			});
 	});
-};
 
-describe("Compliments module", () => {
-	afterAll(async () => {
-		await helpers.stopApplication();
+	afterEach(function () {
+		return helpers.stopApplication(app);
 	});
 
-	describe("parts of days", () => {
-		beforeAll((done) => {
-			helpers.startApplication("tests/configs/modules/compliments/compliments_parts_day.js");
-			helpers.getDocument(done);
+	describe("parts of days", function () {
+		before(function () {
+			// Set config sample for use in test
+			process.env.MM_CONFIG_FILE = "tests/configs/modules/compliments/compliments_parts_day.js";
 		});
 
-		it("if Morning compliments for that part of day", (done) => {
-			const hour = new Date().getHours();
+		it("if Morning compliments for that part of day", function () {
+			var hour = new Date().getHours();
 			if (hour >= 3 && hour < 12) {
 				// if morning check
-				doTest(done, ["Hi", "Good Morning", "Morning test"]);
-			} else {
-				done();
+				return app.client
+					.waitUntilWindowLoaded()
+					.getText(".compliments")
+					.then(function (text) {
+						expect(text).to.be.oneOf(["Hi", "Good Morning", "Morning test"]);
+					});
 			}
 		});
 
-		it("if Afternoon show Compliments for that part of day", (done) => {
-			const hour = new Date().getHours();
+		it("if Afternoon show Compliments for that part of day", function () {
+			var hour = new Date().getHours();
 			if (hour >= 12 && hour < 17) {
-				// if afternoon check
-				doTest(done, ["Hello", "Good Afternoon", "Afternoon test"]);
-			} else {
-				done();
+				// if morning check
+				return app.client
+					.waitUntilWindowLoaded()
+					.getText(".compliments")
+					.then(function (text) {
+						expect(text).to.be.oneOf(["Hello", "Good Afternoon", "Afternoon test"]);
+					});
 			}
 		});
 
-		it("if Evening show Compliments for that part of day", (done) => {
-			const hour = new Date().getHours();
+		it("if Evening show Compliments for that part of day", function () {
+			var hour = new Date().getHours();
 			if (!(hour >= 3 && hour < 12) && !(hour >= 12 && hour < 17)) {
 				// if evening check
-				doTest(done, ["Hello There", "Good Evening", "Evening test"]);
-			} else {
-				done();
+				return app.client
+					.waitUntilWindowLoaded()
+					.getText(".compliments")
+					.then(function (text) {
+						expect(text).to.be.oneOf(["Hello There", "Good Evening", "Evening test"]);
+					});
 			}
 		});
 	});
 
-	describe("Feature anytime in compliments module", () => {
-		describe("Set anytime and empty compliments for morning, evening and afternoon ", () => {
-			beforeAll((done) => {
-				helpers.startApplication("tests/configs/modules/compliments/compliments_anytime.js");
-				helpers.getDocument(done);
+	describe("Feature anytime in compliments module", function () {
+		describe("Set anytime and empty compliments for morning, evening and afternoon ", function () {
+			before(function () {
+				// Set config sample for use in test
+				process.env.MM_CONFIG_FILE = "tests/configs/modules/compliments/compliments_anytime.js";
 			});
 
-			it("Show anytime because if configure empty parts of day compliments and set anytime compliments", (done) => {
-				doTest(done, ["Anytime here"]);
+			it("Show anytime because if configure empty parts of day compliments and set anytime compliments", function () {
+				return app.client
+					.waitUntilWindowLoaded()
+					.getText(".compliments")
+					.then(function (text) {
+						expect(text).to.be.oneOf(["Anytime here"]);
+					});
 			});
 		});
 
-		describe("Only anytime present in configuration compliments", () => {
-			beforeAll((done) => {
-				helpers.startApplication("tests/configs/modules/compliments/compliments_only_anytime.js");
-				helpers.getDocument(done);
+		describe("Only anytime present in configuration compliments", function () {
+			before(function () {
+				// Set config sample for use in test
+				process.env.MM_CONFIG_FILE = "tests/configs/modules/compliments/compliments_only_anytime.js";
 			});
 
-			it("Show anytime compliments", (done) => {
-				doTest(done, ["Anytime here"]);
+			it("Show anytime compliments", function () {
+				return app.client
+					.waitUntilWindowLoaded()
+					.getText(".compliments")
+					.then(function (text) {
+						expect(text).to.be.oneOf(["Anytime here"]);
+					});
 			});
 		});
 	});
 
-	describe("Feature date in compliments module", () => {
-		describe("Set date and empty compliments for anytime, morning, evening and afternoon", () => {
-			beforeAll((done) => {
-				helpers.startApplication("tests/configs/modules/compliments/compliments_date.js");
-				helpers.getDocument(done);
+	describe("Feature date in compliments module", function () {
+		describe("Set date and empty compliments for anytime, morning, evening and afternoon", function () {
+			before(function () {
+				// Set config sample for use in test
+				process.env.MM_CONFIG_FILE = "tests/configs/modules/compliments/compliments_date.js";
 			});
 
-			it("Show happy new year compliment on new years day", (done) => {
-				doTest(done, ["Happy new year!"]);
+			it("Show happy new year compliment on new years day", function () {
+				return app.client
+					.waitUntilWindowLoaded()
+					.getText(".compliments")
+					.then(function (text) {
+						expect(text).to.be.oneOf(["Happy new year!"]);
+					});
 			});
 		});
 	});

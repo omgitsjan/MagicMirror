@@ -1,28 +1,41 @@
 const helpers = require("./global-setup");
 
-describe("Display of modules", () => {
-	beforeAll(function (done) {
-		helpers.startApplication("tests/configs/modules/display.js");
-		helpers.getDocument(done);
-	});
-	afterAll(async () => {
-		await helpers.stopApplication();
+const describe = global.describe;
+const it = global.it;
+
+describe("Display of modules", function () {
+	helpers.setupTimeout(this);
+
+	var app = null;
+
+	beforeEach(function () {
+		return helpers
+			.startApplication({
+				args: ["js/electron.js"]
+			})
+			.then(function (startedApp) {
+				app = startedApp;
+			});
 	});
 
-	it("should show the test header", (done) => {
-		helpers.waitForElement("#module_0_helloworld .module-header").then((elem) => {
-			done();
-			expect(elem).not.toBe(null);
-			// textContent gibt hier lowercase zurück, das uppercase wird durch css realisiert, was daher nicht in textContent landet
-			expect(elem.textContent).toBe("test_header");
+	afterEach(function () {
+		return helpers.stopApplication(app);
+	});
+
+	describe("Using helloworld", function () {
+		before(function () {
+			// Set config sample for use in test
+			process.env.MM_CONFIG_FILE = "tests/configs/modules/display.js";
 		});
-	});
 
-	it("should show no header if no header text is specified", (done) => {
-		helpers.waitForElement("#module_1_helloworld .module-header").then((elem) => {
-			done();
-			expect(elem).not.toBe(null);
-			expect(elem.textContent).toBe("undefined");
+		it("should show the test header", async () => {
+			await app.client.waitForExist("#module_0_helloworld", 10000);
+			return app.client.element("#module_0_helloworld .module-header").isVisible().should.eventually.equal(true).getText("#module_0_helloworld .module-header").should.eventually.equal("TEST_HEADER");
+		});
+
+		it("should show no header if no header text is specified", async () => {
+			await app.client.waitForExist("#module_1_helloworld", 10000);
+			return app.client.element("#module_1_helloworld .module-header").isVisible().should.eventually.equal(false);
 		});
 	});
 });

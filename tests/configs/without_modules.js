@@ -1,10 +1,21 @@
-/* MagicMirror² Test default config for modules
+/* Magic Mirror Test default config for modules
  *
  * By Rodrigo Ramírez Norambuena https://rodrigoramirez.com
  * MIT Licensed.
  */
-let config = {
-	ipWhitelist: ["127.0.0.1", "::ffff:127.0.0.1", "::1", "::ffff:192.168.10.1"]
+
+var config = {
+	port: 8080,
+	ipWhitelist: ["127.0.0.1", "::ffff:127.0.0.1", "::1", "::ffff:192.168.10.1"],
+
+	language: "en",
+	timeFormat: 24,
+	units: "metric",
+	electronOptions: {
+		webPreferences: {
+			nodeIntegration: true
+		}
+	}
 };
 
 /*************** DO NOT EDIT THE LINE BELOW ***************/

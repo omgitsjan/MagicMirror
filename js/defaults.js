@@ -1,17 +1,17 @@
 /* global mmPort */
 
-/* MagicMirror²
+/* Magic Mirror
  * Config Defaults
  *
  * By Michael Teeuw https://michaelteeuw.nl
  * MIT Licensed.
  */
-const address = "localhost";
-let port = 8080;
+var address = "localhost";
+var port = 8080;
 if (typeof mmPort !== "undefined") {
 	port = mmPort;
 }
-const defaults = {
+var defaults = {
 	address: address,
 	port: port,
 	basePath: "/",
@@ -20,14 +20,10 @@ const defaults = {
 	ipWhitelist: ["127.0.0.1", "::ffff:127.0.0.1", "::1"],
 
 	language: "en",
-	logLevel: ["INFO", "LOG", "WARN", "ERROR"],
 	timeFormat: 24,
 	units: "metric",
 	zoom: 1,
 	customCss: "css/custom.css",
-	// httpHeaders used by helmet, see https://helmetjs.github.io/. You can add other/more object values by overriding this in config.js,
-	// e.g. you need to add `frameguard: false` for embedding MagicMirror in another website, see https://github.com/MichMich/MagicMirror/issues/2847
-	httpHeaders: { contentSecurityPolicy: false, crossOriginOpenerPolicy: false, crossOriginEmbedderPolicy: false, crossOriginResourcePolicy: false, originAgentCluster: false },
 
 	modules: [
 		{
@@ -39,14 +35,14 @@ const defaults = {
 			position: "upper_third",
 			classes: "large thin",
 			config: {
-				text: "MagicMirror²"
+				text: "Magic Mirror<sup>2</sup>"
 			}
 		},
 		{
 			module: "helloworld",
 			position: "middle_center",
 			config: {
-				text: "Please create a config file or check the existing one for errors."
+				text: "Please create a config file."
 			}
 		},
 		{
@@ -62,7 +58,7 @@ const defaults = {
 			position: "middle_center",
 			classes: "xsmall",
 			config: {
-				text: "If you get this message while your config file is already created,<br>" + "it probably contains an error. To validate your config file run in your MagicMirror² directory<br>" + "<pre>npm run config:check</pre>"
+				text: "If you get this message while your config file is already<br>created, your config file probably contains an error.<br>Use a JavaScript linter to validate your file."
 			}
 		},
 		{

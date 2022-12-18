@@ -1,37 +1,48 @@
 const helpers = require("../global-setup");
 
-describe("Test helloworld module", () => {
-	afterAll(async () => {
-		await helpers.stopApplication();
+const describe = global.describe;
+const it = global.it;
+const beforeEach = global.beforeEach;
+const afterEach = global.afterEach;
+
+describe("Test helloworld module", function () {
+	helpers.setupTimeout(this);
+
+	var app = null;
+
+	beforeEach(function () {
+		return helpers
+			.startApplication({
+				args: ["js/electron.js"]
+			})
+			.then(function (startedApp) {
+				app = startedApp;
+			});
 	});
 
-	describe("helloworld set config text", () => {
-		beforeAll((done) => {
-			helpers.startApplication("tests/configs/modules/helloworld/helloworld.js");
-			helpers.getDocument(done);
+	afterEach(function () {
+		return helpers.stopApplication(app);
+	});
+
+	describe("helloworld set config text", function () {
+		before(function () {
+			// Set config sample for use in test
+			process.env.MM_CONFIG_FILE = "tests/configs/modules/helloworld/helloworld.js";
 		});
 
-		it("Test message helloworld module", (done) => {
-			helpers.waitForElement(".helloworld").then((elem) => {
-				done();
-				expect(elem).not.toBe(null);
-				expect(elem.textContent).toContain("Test HelloWorld Module");
-			});
+		it("Test message helloworld module", function () {
+			return app.client.waitUntilWindowLoaded().getText(".helloworld").should.eventually.equal("Test HelloWorld Module");
 		});
 	});
 
-	describe("helloworld default config text", () => {
-		beforeAll((done) => {
-			helpers.startApplication("tests/configs/modules/helloworld/helloworld_default.js");
-			helpers.getDocument(done);
+	describe("helloworld default config text", function () {
+		before(function () {
+			// Set config sample for use in test
+			process.env.MM_CONFIG_FILE = "tests/configs/modules/helloworld/helloworld_default.js";
 		});
 
-		it("Test message helloworld module", (done) => {
-			helpers.waitForElement(".helloworld").then((elem) => {
-				done();
-				expect(elem).not.toBe(null);
-				expect(elem.textContent).toContain("Hello World!");
-			});
+		it("Test message helloworld module", function () {
+			return app.client.waitUntilWindowLoaded().getText(".helloworld").should.eventually.equal("Hello World!");
 		});
 	});
 });

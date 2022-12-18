@@ -1,8 +1,20 @@
-/* MagicMirror² Test config for analog clock face
+/* Magic Mirror Test config for analog clock face
  *
  * MIT Licensed.
  */
 let config = {
+	port: 8080,
+	ipWhitelist: ["127.0.0.1", "::ffff:127.0.0.1", "::1"],
+
+	language: "en",
+	timeFormat: 24,
+	units: "metric",
+	electronOptions: {
+		webPreferences: {
+			nodeIntegration: true
+		}
+	},
+
 	modules: [
 		{
 			module: "clock",

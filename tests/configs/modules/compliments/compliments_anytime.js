@@ -1,10 +1,21 @@
-/* MagicMirror² Test config compliments with anytime type
+/* Magic Mirror Test config compliments with anytime type
  *
  * By Rodrigo Ramírez Norambuena https://rodrigoramirez.com
  * MIT Licensed.
  */
-let config = {
+
+var config = {
+	port: 8080,
+	ipWhitelist: ["127.0.0.1", "::ffff:127.0.0.1", "::1"],
+
+	language: "en",
 	timeFormat: 12,
+	units: "metric",
+	electronOptions: {
+		webPreferences: {
+			nodeIntegration: true
+		}
+	},
 
 	modules: [
 		{

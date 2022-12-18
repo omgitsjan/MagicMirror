@@ -1,10 +1,10 @@
 {
 	"extends": ["eslint:recommended", "plugin:prettier/recommended", "plugin:jsdoc/recommended"],
-	"plugins": ["prettier", "jsdoc", "jest"],
+	"plugins": ["prettier", "jsdoc"],
 	"env": {
 		"browser": true,
 		"es6": true,
-		"jest/globals": true,
+		"mocha": true,
 		"node": true
 	},
 	"globals": {
@@ -16,7 +16,7 @@
 	},
 	"parserOptions": {
 		"sourceType": "module",
-		"ecmaVersion": 2020,
+		"ecmaVersion": 2017,
 		"ecmaFeatures": {
 			"globalReturn": true
 		}
@@ -25,7 +25,6 @@
 		"prettier/prettier": "error",
 		"eqeqeq": "error",
 		"no-prototype-builtins": "off",
-		"no-unused-vars": "off",
-		"no-useless-return": "error"
+		"no-unused-vars": "off"
 	}
 }

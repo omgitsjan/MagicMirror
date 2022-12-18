@@ -1,9 +1,5 @@
 const _ = require("lodash");
 
-/**
- * @param {object} extendedData extra data to add to the default mock data
- * @returns {string} mocked forecast weather data
- */
 function generateWeatherForecast(extendedData = {}) {
 	return JSON.stringify(
 		_.merge(

@@ -1,11 +1,11 @@
-/* MagicMirror²
+/* Magic Mirror
  * Translation Definition
  *
  * By Michael Teeuw https://michaelteeuw.nl
  * MIT Licensed.
  */
 
-let translations = {
+var translations = {
 	en: "translations/en.json", // English
 	nl: "translations/nl.json", // Dutch
 	de: "translations/de.json", // German
@@ -14,7 +14,6 @@ let translations = {
 	fy: "translations/fy.json", // Frysk
 	es: "translations/es.json", // Spanish
 	ca: "translations/ca.json", // Catalan
-	cv: "translations/cv.json", // Chuvash
 	nb: "translations/nb.json", // Norsk bokmål
 	nn: "translations/nn.json", // Norsk nynorsk
 	pt: "translations/pt.json", // Português
@@ -26,7 +25,7 @@ let translations = {
 	"zh-tw": "translations/zh-tw.json", // Traditional Chinese
 	ja: "translations/ja.json", // Japanese
 	pl: "translations/pl.json", // Polish
-	el: "translations/el.json", // Greek
+	gr: "translations/gr.json", // Greek
 	da: "translations/da.json", // Danish
 	tr: "translations/tr.json", // Turkish
 	ru: "translations/ru.json", // Russian
@@ -34,7 +33,7 @@ let translations = {
 	hu: "translations/hu.json", // Hungarian
 	is: "translations/is.json", // Icelandic
 	et: "translations/et.json", // Estonian
-	ko: "translations/ko.json", // Korean
+	kr: "translations/kr.json", // Korean
 	ro: "translations/ro.json", // Romanian
 	cy: "translations/cy.json", // Welsh (Cymraeg)
 	bg: "translations/bg.json", // Bulgarian
@@ -44,11 +43,7 @@ let translations = {
 	tlh: "translations/tlh.json", // Klingon
 	"ms-my": "translations/ms-my.json", // Malay
 	he: "translations/he.json", // Hebrew
-	uk: "translations/uk.json", // Ukrainian
-	hi: "translations/hi.json", // Hindi
-	gu: "translations/gu.json", // Gujarati
-	gl: "translations/gl.json", // Galego
-	lt: "translations/lt.json" // Lithuanian
+	uk: "translations/uk.json" // Ukrainian
 };
 
 if (typeof module !== "undefined") {

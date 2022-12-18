@@ -1,6 +1,6 @@
 /* global WeatherProvider, WeatherObject */
 
-/* MagicMirror²
+/* Magic Mirror
  * Module: Weather
  * Provider: Dark Sky
  *
@@ -8,23 +8,12 @@
  * MIT Licensed
  *
  * This class is a provider for Dark Sky.
- * Note that the Dark Sky API does not provide rainfall. Instead it provides
- * snowfall and precipitation probability
+ * Note that the Dark Sky API does not provide rainfall.  Instead it provides snowfall and precipitation probability
  */
 WeatherProvider.register("darksky", {
 	// Set the name of the provider.
 	// Not strictly required, but helps for debugging.
 	providerName: "Dark Sky",
-
-	// Set the default config properties that is specific to this provider
-	defaults: {
-		useCorsProxy: true,
-		apiBase: "https://api.darksky.net",
-		weatherEndpoint: "/forecast",
-		apiKey: "",
-		lat: 0,
-		lon: 0
-	},
 
 	units: {
 		imperial: "us",
@@ -73,7 +62,7 @@ WeatherProvider.register("darksky", {
 
 	// Implement WeatherDay generator.
 	generateWeatherDayFromCurrentWeather(currentWeatherData) {
-		const currentWeather = new WeatherObject(this.config.units, this.config.tempUnits, this.config.windUnits, this.config.useKmh);
+		const currentWeather = new WeatherObject(this.config.units, this.config.tempUnits, this.config.windUnits);
 
 		currentWeather.date = moment();
 		currentWeather.humidity = parseFloat(currentWeatherData.currently.humidity);
@@ -91,7 +80,7 @@ WeatherProvider.register("darksky", {
 		const days = [];
 
 		for (const forecast of forecasts) {
-			const weather = new WeatherObject(this.config.units, this.config.tempUnits, this.config.windUnits, this.config.useKmh);
+			const weather = new WeatherObject(this.config.units, this.config.tempUnits, this.config.windUnits);
 
 			weather.date = moment(forecast.time, "X");
 			weather.minTemperature = forecast.temperatureMin;
@@ -100,8 +89,7 @@ WeatherProvider.register("darksky", {
 			weather.snow = 0;
 
 			// The API will return centimeters if units is 'si' and will return inches for 'us'
-			// Note that the Dark Sky API does not provide rainfall.
-			// Instead it provides snowfall and precipitation probability
+			// Note that the Dark Sky API does not provide rainfall.  Instead it provides snowfall and precipitation probability
 			if (forecast.hasOwnProperty("precipAccumulation")) {
 				if (this.config.units === "imperial" && !isNaN(forecast.precipAccumulation)) {
 					weather.snow = forecast.precipAccumulation;

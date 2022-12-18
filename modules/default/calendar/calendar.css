@@ -1,14 +1,13 @@
 .calendar .symbol {
-  display: flex;
-  flex-direction: row;
-  justify-content: flex-end;
   padding-left: 0;
   padding-right: 10px;
-  font-size: var(--font-size-small);
+  font-size: 80%;
+  vertical-align: top;
 }
 
 .calendar .symbol span {
-  padding-top: 4px;
+  display: inline-block;
+  transform: translate(0, 2px);
 }
 
 .calendar .title {

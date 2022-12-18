@@ -1,73 +1,61 @@
-const jsdom = require("jsdom");
+/*
+ * Magic Mirror
+ *
+ * Global Setup Test Suite
+ *
+ * By Rodrigo Ramírez Norambuena https://rodrigoramirez.com
+ * MIT Licensed.
+ *
+ */
 
-exports.startApplication = (configFilename, exec) => {
-	jest.resetModules();
-	this.stopApplication();
-	// Set config sample for use in test
-	if (configFilename === "") {
-		process.env.MM_CONFIG_FILE = "config/config.js";
+const Application = require("spectron").Application;
+const assert = require("assert");
+const chai = require("chai");
+const chaiAsPromised = require("chai-as-promised");
+const path = require("path");
+
+global.before(function () {
+	chai.should();
+	chai.use(chaiAsPromised);
+});
+
+exports.getElectronPath = function () {
+	var electronPath = path.join(__dirname, "..", "..", "node_modules", ".bin", "electron");
+	if (process.platform === "win32") {
+		electronPath += ".cmd";
+	}
+	return electronPath;
+};
+
+// Set timeout - if this is run within Travis, increase timeout
+exports.setupTimeout = function (test) {
+	if (process.env.CI) {
+		test.timeout(30000);
 	} else {
-		process.env.MM_CONFIG_FILE = configFilename;
+		test.timeout(10000);
 	}
-	if (exec) exec;
-	global.app = require("app.js");
-	global.app.start();
 };
 
-exports.stopApplication = async () => {
-	if (global.app) {
-		global.app.stop();
+exports.startApplication = function (options) {
+	options.path = exports.getElectronPath();
+	if (process.env.CI) {
+		options.startTimeout = 30000;
 	}
-	await new Promise((resolve) => setTimeout(resolve, 100));
-};
 
-exports.getDocument = (callback) => {
-	const url = "http://" + (config.address || "localhost") + ":" + (config.port || "8080");
-	jsdom.JSDOM.fromURL(url, { resources: "usable", runScripts: "dangerously" }).then((dom) => {
-		dom.window.name = "jsdom";
-		dom.window.onload = () => {
-			global.document = dom.window.document;
-			callback();
-		};
+	var app = new Application(options);
+	return app.start().then(function () {
+		assert.equal(app.isRunning(), true);
+		chaiAsPromised.transferPromiseness = app.transferPromiseness;
+		return app;
 	});
 };
 
-exports.waitForElement = (selector, ignoreValue = "") => {
-	return new Promise((resolve) => {
-		let oldVal = "dummy12345";
-		const interval = setInterval(() => {
-			const element = document.querySelector(selector);
-			if (element) {
-				let newVal = element.textContent;
-				if (newVal === oldVal) {
-					clearInterval(interval);
-					resolve(element);
-				} else {
-					if (ignoreValue === "") {
-						oldVal = newVal;
-					} else {
-						if (!newVal.includes(ignoreValue)) oldVal = newVal;
-					}
-				}
-			}
-		}, 100);
-	});
-};
+exports.stopApplication = function (app) {
+	if (!app || !app.isRunning()) {
+		return;
+	}
 
-exports.waitForAllElements = (selector) => {
-	return new Promise((resolve) => {
-		let oldVal = 999999;
-		const interval = setInterval(() => {
-			const element = document.querySelectorAll(selector);
-			if (element) {
-				let newVal = element.length;
-				if (newVal === oldVal) {
-					clearInterval(interval);
-					resolve(element);
-				} else {
-					if (newVal !== 0) oldVal = newVal;
-				}
-			}
-		}, 100);
+	return app.stop().then(function () {
+		assert.equal(app.isRunning(), false);
 	});
 };

@@ -1,10 +1,21 @@
-/* MagicMirror² Test config default calendar
+/* Magic Mirror Test config default calendar
  *
  * By Rodrigo Ramírez Norambuena https://rodrigoramirez.com
  * MIT Licensed.
  */
-let config = {
+
+var config = {
+	port: 8080,
+	ipWhitelist: ["127.0.0.1", "::ffff:127.0.0.1", "::1"],
+
+	language: "en",
 	timeFormat: 12,
+	units: "metric",
+	electronOptions: {
+		webPreferences: {
+			nodeIntegration: true
+		}
+	},
 
 	modules: [
 		{
@@ -14,7 +25,7 @@ let config = {
 				calendars: [
 					{
 						maximumNumberOfDays: 10000,
-						url: "http://localhost:8080/tests/configs/data/calendar_test.ics",
+						url: "http://localhost:8010/tests/configs/data/calendar_test.ics",
 						auth: {
 							user: "MagicMirror",
 							pass: "CallMeADog",

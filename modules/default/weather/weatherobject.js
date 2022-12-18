@@ -1,6 +1,4 @@
-/* global SunCalc */
-
-/* MagicMirror²
+/* Magic Mirror
  * Module: Weather
  *
  * By Michael Teeuw https://michaelteeuw.nl
@@ -12,19 +10,10 @@
  * As soon as we start implementing the forecast, mode properties will be added.
  */
 class WeatherObject {
-	/**
-	 * Constructor for a WeatherObject
-	 *
-	 * @param {string} units what units to use, "imperial" or "metric"
-	 * @param {string} tempUnits what tempunits to use
-	 * @param {string} windUnits what windunits to use
-	 * @param {boolean} useKmh use kmh if true, mps if false
-	 */
-	constructor(units, tempUnits, windUnits, useKmh) {
+	constructor(units, tempUnits, windUnits) {
 		this.units = units;
 		this.tempUnits = tempUnits;
 		this.windUnits = windUnits;
-		this.useKmh = useKmh;
 		this.date = null;
 		this.windSpeed = null;
 		this.windDirection = null;
@@ -38,7 +27,6 @@ class WeatherObject {
 		this.rain = null;
 		this.snow = null;
 		this.precipitation = null;
-		this.precipitationUnits = null;
 		this.feelsLikeTemp = null;
 	}
 
@@ -79,7 +67,7 @@ class WeatherObject {
 	}
 
 	beaufortWindSpeed() {
-		const windInKmh = this.windUnits === "imperial" ? this.windSpeed * 1.609344 : this.useKmh ? this.windSpeed : (this.windSpeed * 60 * 60) / 1000;
+		const windInKmh = this.windUnits === "imperial" ? this.windSpeed * 1.609344 : (this.windSpeed * 60 * 60) / 1000;
 		const speeds = [1, 5, 11, 19, 28, 38, 49, 61, 74, 88, 102, 117, 1000];
 		for (const [index, speed] of speeds.entries()) {
 			if (speed > windInKmh) {
@@ -87,10 +75,6 @@ class WeatherObject {
 			}
 		}
 		return 12;
-	}
-
-	kmhWindSpeed() {
-		return this.windUnits === "imperial" ? this.windSpeed * 1.609344 : (this.windSpeed * 60 * 60) / 1000;
 	}
 
 	nextSunAction() {
@@ -122,50 +106,4 @@ class WeatherObject {
 
 		return this.tempUnits === "imperial" ? feelsLike : ((feelsLike - 32) * 5) / 9;
 	}
-
-	/**
-	 * Checks if the weatherObject is at dayTime.
-	 *
-	 * @returns {boolean} true if it is at dayTime
-	 */
-	isDayTime() {
-		return this.date.isBetween(this.sunrise, this.sunset, undefined, "[]");
-	}
-
-	/**
-	 * Update the sunrise / sunset time depending on the location. This can be
-	 * used if your provider doesnt provide that data by itself. Then SunCalc
-	 * is used here to calculate them according to the location.
-	 *
-	 * @param {number} lat latitude
-	 * @param {number} lon longitude
-	 */
-	updateSunTime(lat, lon) {
-		let now = !this.date ? new Date() : this.date.toDate();
-		let times = SunCalc.getTimes(now, lat, lon);
-		this.sunrise = moment(times.sunrise, "X");
-		this.sunset = moment(times.sunset, "X");
-	}
-
-	/**
-	 * Clone to simple object to prevent mutating and deprecation of legacy library.
-	 *
-	 * Before being handed to other modules, mutable values must be cloned safely.
-	 * Especially 'moment' object is not immutable, so original 'date', 'sunrise', 'sunset' could be corrupted or changed by other modules.
-	 *
-	 * @returns {object} plained object clone of original weatherObject
-	 */
-	simpleClone() {
-		const toFlat = ["date", "sunrise", "sunset"];
-		let clone = { ...this };
-		for (const prop of toFlat) {
-			clone[prop] = clone?.[prop]?.valueOf() ?? clone?.[prop];
-		}
-		return clone;
-	}
-}
-
-/*************** DO NOT EDIT THE LINE BELOW ***************/
-if (typeof module !== "undefined") {
-	module.exports = WeatherObject;
 }

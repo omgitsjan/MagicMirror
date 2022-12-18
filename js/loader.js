@@ -1,29 +1,29 @@
 /* global defaultModules, vendor */
 
-/* MagicMirror²
+/* Magic Mirror
  * Module and File loaders.
  *
  * By Michael Teeuw https://michaelteeuw.nl
  * MIT Licensed.
  */
-const Loader = (function () {
+var Loader = (function () {
 	/* Create helper variables */
 
-	const loadedModuleFiles = [];
-	const loadedFiles = [];
-	const moduleObjects = [];
+	var loadedModuleFiles = [];
+	var loadedFiles = [];
+	var moduleObjects = [];
 
 	/* Private Methods */
 
 	/**
 	 * Loops thru all modules and requests load for every module.
 	 */
-	const loadModules = function () {
-		let moduleData = getModuleData();
+	var loadModules = function () {
+		var moduleData = getModuleData();
 
-		const loadNextModule = function () {
+		var loadNextModule = function () {
 			if (moduleData.length > 0) {
-				const nextModule = moduleData[0];
+				var nextModule = moduleData[0];
 				loadModule(nextModule, function () {
 					moduleData = moduleData.slice(1);
 					loadNextModule();
@@ -46,21 +46,14 @@ const Loader = (function () {
 	/**
 	 * Loops thru all modules and requests start for every module.
 	 */
-	const startModules = function () {
-		for (const module of moduleObjects) {
+	var startModules = function () {
+		for (var m in moduleObjects) {
+			var module = moduleObjects[m];
 			module.start();
 		}
 
 		// Notify core of loaded modules.
 		MM.modulesStarted(moduleObjects);
-
-		// Starting modules also hides any modules that have requested to be initially hidden
-		for (const thisModule of moduleObjects) {
-			if (thisModule.data.hiddenOnStartup) {
-				Log.info("Initially hiding " + thisModule.name);
-				thisModule.hide();
-			}
-		}
 	};
 
 	/**
@@ -68,7 +61,7 @@ const Loader = (function () {
 	 *
 	 * @returns {object[]} module data as configured in config
 	 */
-	const getAllModules = function () {
+	var getAllModules = function () {
 		return config.modules;
 	};
 
@@ -77,39 +70,39 @@ const Loader = (function () {
 	 *
 	 * @returns {object[]} Module information.
 	 */
-	const getModuleData = function () {
-		const modules = getAllModules();
-		const moduleFiles = [];
+	var getModuleData = function () {
+		var modules = getAllModules();
+		var moduleFiles = [];
 
-		modules.forEach(function (moduleData, index) {
-			const module = moduleData.module;
+		for (var m in modules) {
+			var moduleData = modules[m];
+			var module = moduleData.module;
 
-			const elements = module.split("/");
-			const moduleName = elements[elements.length - 1];
-			let moduleFolder = config.paths.modules + "/" + module;
+			var elements = module.split("/");
+			var moduleName = elements[elements.length - 1];
+			var moduleFolder = config.paths.modules + "/" + module;
 
 			if (defaultModules.indexOf(moduleName) !== -1) {
 				moduleFolder = config.paths.modules + "/default/" + module;
 			}
 
 			if (moduleData.disabled === true) {
-				return;
+				continue;
 			}
 
 			moduleFiles.push({
-				index: index,
-				identifier: "module_" + index + "_" + module,
+				index: m,
+				identifier: "module_" + m + "_" + module,
 				name: moduleName,
 				path: moduleFolder + "/",
 				file: moduleName + ".js",
 				position: moduleData.position,
-				hiddenOnStartup: moduleData.hiddenOnStartup,
 				header: moduleData.header,
 				configDeepMerge: typeof moduleData.configDeepMerge === "boolean" ? moduleData.configDeepMerge : false,
 				config: moduleData.config,
 				classes: typeof moduleData.classes !== "undefined" ? moduleData.classes + " " + module : module
 			});
-		});
+		}
 
 		return moduleFiles;
 	};
@@ -120,11 +113,11 @@ const Loader = (function () {
 	 * @param {object} module Information about the module we want to load.
 	 * @param {Function} callback Function called when done.
 	 */
-	const loadModule = function (module, callback) {
-		const url = module.path + module.file;
+	var loadModule = function (module, callback) {
+		var url = module.path + "/" + module.file;
 
-		const afterLoad = function () {
-			const moduleObject = Module.create(module.name);
+		var afterLoad = function () {
+			var moduleObject = Module.create(module.name);
 			if (moduleObject) {
 				bootstrapModule(module, moduleObject, function () {
 					callback();
@@ -151,7 +144,7 @@ const Loader = (function () {
 	 * @param {Module} mObj Modules instance.
 	 * @param {Function} callback Function called when done.
 	 */
-	const bootstrapModule = function (module, mObj, callback) {
+	var bootstrapModule = function (module, mObj, callback) {
 		Log.info("Bootstrapping module: " + module.name);
 
 		mObj.setData(module);
@@ -175,14 +168,13 @@ const Loader = (function () {
 	 * @param {string} fileName Path of the file we want to load.
 	 * @param {Function} callback Function called when done.
 	 */
-	const loadFile = function (fileName, callback) {
-		const extension = fileName.slice((Math.max(0, fileName.lastIndexOf(".")) || Infinity) + 1);
-		let script, stylesheet;
+	var loadFile = function (fileName, callback) {
+		var extension = fileName.slice((Math.max(0, fileName.lastIndexOf(".")) || Infinity) + 1);
 
 		switch (extension.toLowerCase()) {
 			case "js":
 				Log.log("Load script: " + fileName);
-				script = document.createElement("script");
+				var script = document.createElement("script");
 				script.type = "text/javascript";
 				script.src = fileName;
 				script.onload = function () {
@@ -201,7 +193,7 @@ const Loader = (function () {
 				break;
 			case "css":
 				Log.log("Load stylesheet: " + fileName);
-				stylesheet = document.createElement("link");
+				var stylesheet = document.createElement("link");
 				stylesheet.rel = "stylesheet";
 				stylesheet.type = "text/css";
 				stylesheet.href = fileName;

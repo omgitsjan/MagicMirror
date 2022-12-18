@@ -1,140 +1,139 @@
-const moment = require("moment");
-const helpers = require("../global-setup");
-const path = require("path");
+const expect = require("chai").expect;
 const fs = require("fs");
+const moment = require("moment");
+const path = require("path");
+const wdajaxstub = require("webdriverajaxstub");
+
+const helpers = require("../global-setup");
+
 const { generateWeather, generateWeatherForecast } = require("./mocks");
 
-describe("Weather module", () => {
-	/**
-	 * @param {string} done test done
-	 * @param {string} element css selector
-	 * @param {string} result Expected text in given selector
-	 */
-	const getText = (done, element, result) => {
-		helpers.waitForElement(element).then((elem) => {
-			done();
-			expect(elem).not.toBe(null);
-			expect(
-				elem.textContent
-					.trim()
-					.replace(/(\r\n|\n|\r)/gm, "")
-					.replace(/[ ]+/g, " ")
-			).toBe(result);
+describe("Weather module", function () {
+	let app;
+
+	helpers.setupTimeout(this);
+
+	async function setup(responses) {
+		app = await helpers.startApplication({
+			args: ["js/electron.js"]
 		});
-	};
 
-	/**
-	 * @param {string} configFile path to configuration file
-	 * @param {string} additionalMockData special data for mocking
-	 * @param {string} callback callback
-	 */
-	const startApp = (configFile, additionalMockData, callback) => {
-		let mockWeather;
-		if (configFile.includes("forecast")) {
-			mockWeather = generateWeatherForecast(additionalMockData);
-		} else {
-			mockWeather = generateWeather(additionalMockData);
-		}
-		let content = fs.readFileSync(path.resolve(__dirname + "../../../../" + configFile)).toString();
-		content = content.replace("#####WEATHERDATA#####", mockWeather);
-		fs.writeFileSync(path.resolve(__dirname + "../../../../config/config.js"), content);
-		helpers.startApplication("");
-		helpers.getDocument(callback);
-	};
+		wdajaxstub.init(app.client, responses);
 
-	afterAll(async () => {
-		await helpers.stopApplication();
+		app.client.setupStub();
+	}
+
+	afterEach(function () {
+		return helpers.stopApplication(app);
 	});
 
-	describe("Current weather", () => {
-		describe("Default configuration", () => {
-			beforeAll((done) => {
-				startApp("tests/configs/modules/weather/currentweather_default.js", {}, done);
-			});
+	describe("Current weather", function () {
+		let template;
 
-			it("should render wind speed and wind direction", (done) => {
-				getText(done, ".weather .normal.medium span:nth-child(2)", "6 WSW"); // now "12"
-			});
-
-			it("should render temperature with icon", (done) => {
-				getText(done, ".weather .large.light span.bright", "1.5°"); // now "1°C"
-			});
-
-			it("should render feels like temperature", (done) => {
-				getText(done, ".weather .normal.medium.feelslike span.dimmed", "Feels like -5.6°"); // now "Feels like -6°C"
-			});
+		before(function () {
+			template = fs.readFileSync(path.join(__dirname, "..", "..", "..", "modules", "default", "weather", "current.njk"), "utf8");
 		});
 
-		describe("Default configuration with sunrise", () => {
-			beforeAll((done) => {
+		describe("Default configuration", function () {
+			before(function () {
+				process.env.MM_CONFIG_FILE = "tests/configs/modules/weather/currentweather_default.js";
+			});
+
+			it("should render wind speed and wind direction", async function () {
+				const weather = generateWeather();
+				await setup({ template, data: weather });
+
+				return app.client.waitUntilTextExists(".weather .normal.medium span:nth-child(2)", "6 WSW", 10000);
+			});
+
+			it("should render sunrise", async function () {
 				const sunrise = moment().startOf("day").unix();
 				const sunset = moment().startOf("day").unix();
-				startApp("tests/configs/modules/weather/currentweather_default.js", { sys: { sunrise, sunset } }, done);
+
+				const weather = generateWeather({ sys: { sunrise, sunset } });
+				await setup({ template, data: weather });
+
+				await app.client.waitForExist(".weather .normal.medium span.wi.dimmed.wi-sunrise", 10000);
+
+				return app.client.waitUntilTextExists(".weather .normal.medium span:nth-child(4)", "12:00 am", 10000);
 			});
 
-			it("should render sunrise", (done) => {
-				getText(done, ".weather .normal.medium span:nth-child(4)", "12:00 am");
-			});
-		});
-
-		describe("Default configuration with sunset", () => {
-			beforeAll((done) => {
+			it("should render sunset", async function () {
 				const sunrise = moment().startOf("day").unix();
 				const sunset = moment().endOf("day").unix();
-				startApp("tests/configs/modules/weather/currentweather_default.js", { sys: { sunrise, sunset } }, done);
+
+				const weather = generateWeather({ sys: { sunrise, sunset } });
+				await setup({ template, data: weather });
+
+				await app.client.waitForExist(".weather .normal.medium span.wi.dimmed.wi-sunset", 10000);
+
+				return app.client.waitUntilTextExists(".weather .normal.medium span:nth-child(4)", "11:59 pm", 10000);
 			});
 
-			it("should render sunset", (done) => {
-				getText(done, ".weather .normal.medium span:nth-child(4)", "11:59 pm");
+			it("should render temperature with icon", async function () {
+				const weather = generateWeather();
+				await setup({ template, data: weather });
+
+				await app.client.waitForExist(".weather .large.light span.wi.weathericon.wi-snow", 10000);
+
+				return app.client.waitUntilTextExists(".weather .large.light span.bright", "1.5°", 10000);
 			});
-		});
-	});
 
-	describe("Compliments Integration", () => {
-		beforeAll((done) => {
-			startApp("tests/configs/modules/weather/currentweather_compliments.js", {}, done);
-		});
+			it("should render feels like temperature", async function () {
+				const weather = generateWeather();
+				await setup({ template, data: weather });
 
-		it("should render a compliment based on the current weather", (done) => {
-			getText(done, ".compliments .module-content span", "snow");
-		});
-	});
-
-	describe("Configuration Options", () => {
-		beforeAll((done) => {
-			startApp("tests/configs/modules/weather/currentweather_options.js", {}, done);
-		});
-
-		it("should render useBeaufort = false", (done) => {
-			getText(done, ".weather .normal.medium span:nth-child(2)", "12");
-		});
-
-		it("should render showWindDirectionAsArrow = true", (done) => {
-			helpers.waitForElement(".weather .normal.medium sup i.fa-long-arrow-alt-up").then((elem) => {
-				done();
-				expect(elem).not.toBe(null);
-				expect(elem.outerHTML).toContain("transform:rotate(250deg);");
+				return app.client.waitUntilTextExists(".weather .normal.medium span.dimmed", "Feels like -5.6°", 10000);
 			});
 		});
 
-		it("should render showHumidity = true", (done) => {
-			getText(done, ".weather .normal.medium span:nth-child(3)", "93.7");
+		describe("Configuration Options", function () {
+			before(function () {
+				process.env.MM_CONFIG_FILE = "tests/configs/modules/weather/currentweather_options.js";
+			});
+
+			it("should render useBeaufort = false", async function () {
+				const weather = generateWeather();
+				await setup({ template, data: weather });
+
+				return app.client.waitUntilTextExists(".weather .normal.medium span:nth-child(2)", "12", 10000);
+			});
+
+			it("should render showWindDirectionAsArrow = true", async function () {
+				const weather = generateWeather();
+				await setup({ template, data: weather });
+
+				await app.client.waitForExist(".weather .normal.medium sup i.fa-long-arrow-up", 10000);
+				const element = await app.client.getHTML(".weather .normal.medium sup i.fa-long-arrow-up");
+
+				expect(element).to.include("transform:rotate(250deg);");
+			});
+
+			it("should render showHumidity = true", async function () {
+				const weather = generateWeather();
+				await setup({ template, data: weather });
+
+				await app.client.waitUntilTextExists(".weather .normal.medium span:nth-child(3)", "93", 10000);
+				return app.client.waitForExist(".weather .normal.medium sup i.wi-humidity", 10000);
+			});
+
+			it("should render degreeLabel = true", async function () {
+				const weather = generateWeather();
+				await setup({ template, data: weather });
+
+				await app.client.waitUntilTextExists(".weather .large.light span.bright", "1°C", 10000);
+
+				return app.client.waitUntilTextExists(".weather .normal.medium span.dimmed", "Feels like -6°C", 10000);
+			});
 		});
 
-		it("should render degreeLabel = true for temp", (done) => {
-			getText(done, ".weather .large.light span.bright", "1°C");
-		});
+		describe("Current weather units", function () {
+			before(function () {
+				process.env.MM_CONFIG_FILE = "tests/configs/modules/weather/currentweather_units.js";
+			});
 
-		it("should render degreeLabel = true for feels like", (done) => {
-			getText(done, ".weather .normal.medium.feelslike span.dimmed", "Feels like -6°C");
-		});
-	});
-
-	describe("Current weather units", () => {
-		beforeAll((done) => {
-			startApp(
-				"tests/configs/modules/weather/currentweather_units.js",
-				{
+			it("should render imperial units", async function () {
+				const weather = generateWeather({
 					main: {
 						temp: (1.49 * 9) / 5 + 32,
 						temp_min: (1 * 9) / 5 + 32,
@@ -143,131 +142,127 @@ describe("Weather module", () => {
 					wind: {
 						speed: 11.8 * 2.23694
 					}
-				},
-				done
-			);
-		});
+				});
+				await setup({ template, data: weather });
 
-		it("should render imperial units for wind", (done) => {
-			getText(done, ".weather .normal.medium span:nth-child(2)", "6 WSW");
-		});
+				await app.client.waitUntilTextExists(".weather .normal.medium span:nth-child(2)", "6 WSW", 10000);
+				await app.client.waitUntilTextExists(".weather .large.light span.bright", "34,7°", 10000);
+				return app.client.waitUntilTextExists(".weather .normal.medium span.dimmed", "22,0°", 10000);
+			});
 
-		it("should render imperial units for temp", (done) => {
-			getText(done, ".weather .large.light span.bright", "34,7°");
-		});
+			it("should render decimalSymbol = ','", async function () {
+				const weather = generateWeather({
+					main: {
+						temp: (1.49 * 9) / 5 + 32,
+						temp_min: (1 * 9) / 5 + 32,
+						temp_max: (2 * 9) / 5 + 32
+					},
+					wind: {
+						speed: 11.8 * 2.23694
+					}
+				});
+				await setup({ template, data: weather });
 
-		it("should render imperial units for feels like", (done) => {
-			getText(done, ".weather .normal.medium.feelslike span.dimmed", "Feels like 22,0°");
-		});
-
-		it("should render custom decimalSymbol = ',' for humidity", (done) => {
-			getText(done, ".weather .normal.medium span:nth-child(3)", "93,7");
-		});
-
-		it("should render custom decimalSymbol = ',' for temp", (done) => {
-			getText(done, ".weather .large.light span.bright", "34,7°");
-		});
-
-		it("should render custom decimalSymbol = ',' for feels like", (done) => {
-			getText(done, ".weather .normal.medium.feelslike span.dimmed", "Feels like 22,0°");
+				await app.client.waitUntilTextExists(".weather .normal.medium span:nth-child(3)", "93,7", 10000);
+				await app.client.waitUntilTextExists(".weather .large.light span.bright", "34,7°", 10000);
+				return app.client.waitUntilTextExists(".weather .normal.medium span.dimmed", "22,0°", 10000);
+			});
 		});
 	});
 
-	describe("Weather Forecast", () => {
-		describe("Default configuration", () => {
-			beforeAll((done) => {
-				startApp("tests/configs/modules/weather/forecastweather_default.js", {}, done);
-			});
+	describe("Weather Forecast", function () {
+		let template;
 
-			const days = ["Today", "Tomorrow", "Sun", "Mon", "Tue"];
-			for (const [index, day] of days.entries()) {
-				it("should render day " + day, (done) => {
-					getText(done, `.weather table.small tr:nth-child(${index + 1}) td:nth-child(1)`, day);
-				});
-			}
-
-			const icons = ["day-cloudy", "rain", "day-sunny", "day-sunny", "day-sunny"];
-			for (const [index, icon] of icons.entries()) {
-				it("should render icon " + icon, (done) => {
-					helpers.waitForElement(`.weather table.small tr:nth-child(${index + 1}) td:nth-child(2) span.wi-${icon}`).then((elem) => {
-						done();
-						expect(elem).not.toBe(null);
-					});
-				});
-			}
-
-			const maxTemps = ["24.4°", "21.0°", "22.9°", "23.4°", "20.6°"];
-			for (const [index, temp] of maxTemps.entries()) {
-				it("should render max temperature " + temp, (done) => {
-					getText(done, `.weather table.small tr:nth-child(${index + 1}) td:nth-child(3)`, temp);
-				});
-			}
-
-			const minTemps = ["15.3°", "13.6°", "13.8°", "13.9°", "10.9°"];
-			for (const [index, temp] of minTemps.entries()) {
-				it("should render min temperature " + temp, (done) => {
-					getText(done, `.weather table.small tr:nth-child(${index + 1}) td:nth-child(4)`, temp);
-				});
-			}
-
-			const opacities = [1, 1, 0.8, 0.5333333333333333, 0.2666666666666667];
-			for (const [index, opacity] of opacities.entries()) {
-				it("should render fading of rows with opacity=" + opacity, (done) => {
-					helpers.waitForElement(`.weather table.small tr:nth-child(${index + 1})`).then((elem) => {
-						done();
-						expect(elem).not.toBe(null);
-						expect(elem.outerHTML).toContain(`<tr style="opacity: ${opacity};">`);
-					});
-				});
-			}
+		before(function () {
+			template = fs.readFileSync(path.join(__dirname, "..", "..", "..", "modules", "default", "weather", "forecast.njk"), "utf8");
 		});
 
-		describe("Absolute configuration", () => {
-			beforeAll((done) => {
-				startApp("tests/configs/modules/weather/forecastweather_absolute.js", {}, done);
+		describe("Default configuration", function () {
+			before(function () {
+				process.env.MM_CONFIG_FILE = "tests/configs/modules/weather/forecastweather_default.js";
 			});
 
-			const days = ["Fri", "Sat", "Sun", "Mon", "Tue"];
-			for (const [index, day] of days.entries()) {
-				it("should render day " + day, (done) => {
-					getText(done, `.weather table.small tr:nth-child(${index + 1}) td:nth-child(1)`, day);
-				});
-			}
-		});
+			it("should render days", async function () {
+				const weather = generateWeatherForecast();
+				await setup({ template, data: weather });
 
-		describe("Configuration Options", () => {
-			beforeAll((done) => {
-				startApp("tests/configs/modules/weather/forecastweather_options.js", {}, done);
+				const days = ["Fri", "Sat", "Sun", "Mon", "Tue"];
+
+				for (const [index, day] of days.entries()) {
+					await app.client.waitUntilTextExists(`.weather table.small tr:nth-child(${index + 1}) td:nth-child(1)`, day, 10000);
+				}
 			});
 
-			it("should render custom table class", (done) => {
-				helpers.waitForElement(".weather table.myTableClass").then((elem) => {
-					done();
-					expect(elem).not.toBe(null);
-				});
+			it("should render icons", async function () {
+				const weather = generateWeatherForecast();
+				await setup({ template, data: weather });
+
+				const icons = ["day-cloudy", "rain", "day-sunny", "day-sunny", "day-sunny"];
+
+				for (const [index, icon] of icons.entries()) {
+					await app.client.waitForExist(`.weather table.small tr:nth-child(${index + 1}) td:nth-child(2) span.wi-${icon}`, 10000);
+				}
 			});
 
-			it("should render colored rows", (done) => {
-				helpers.waitForElement(".weather table.myTableClass").then((table) => {
-					done();
-					expect(table).not.toBe(null);
-					expect(table.rows).not.toBe(null);
-					expect(table.rows.length).toBe(5);
-				});
+			it("should render max temperatures", async function () {
+				const weather = generateWeatherForecast();
+				await setup({ template, data: weather });
+
+				const temperatures = ["24.4°", "21.0°", "22.9°", "23.4°", "20.6°"];
+
+				for (const [index, temp] of temperatures.entries()) {
+					await app.client.waitUntilTextExists(`.weather table.small tr:nth-child(${index + 1}) td:nth-child(3)`, temp, 10000);
+				}
+			});
+
+			it("should render min temperatures", async function () {
+				const weather = generateWeatherForecast();
+				await setup({ template, data: weather });
+
+				const temperatures = ["15.3°", "13.6°", "13.8°", "13.9°", "10.9°"];
+
+				for (const [index, temp] of temperatures.entries()) {
+					await app.client.waitUntilTextExists(`.weather table.small tr:nth-child(${index + 1}) td:nth-child(4)`, temp, 10000);
+				}
+			});
+
+			it("should render fading of rows", async function () {
+				const weather = generateWeatherForecast();
+				await setup({ template, data: weather });
+
+				const opacities = [1, 1, 0.8, 0.5333333333333333, 0.2666666666666667];
+
+				await app.client.waitForExist(".weather table.small", 10000);
+
+				for (const [index, opacity] of opacities.entries()) {
+					const html = await app.client.getHTML(`.weather table.small tr:nth-child(${index + 1})`);
+					expect(html).to.includes(`<tr style="opacity: ${opacity};">`);
+				}
 			});
 		});
 
-		describe("Forecast weather units", () => {
-			beforeAll((done) => {
-				startApp("tests/configs/modules/weather/forecastweather_units.js", {}, done);
+		describe("Configuration Options", function () {
+			before(function () {
+				process.env.MM_CONFIG_FILE = "tests/configs/modules/weather/forecastweather_options.js";
 			});
 
-			const temperatures = ["24_4°", "21_0°", "22_9°", "23_4°", "20_6°"];
-			for (const [index, temp] of temperatures.entries()) {
-				it("should render custom decimalSymbol = '_' for temp " + temp, (done) => {
-					getText(done, `.weather table.small tr:nth-child(${index + 1}) td:nth-child(3)`, temp);
-				});
-			}
+			it("should render custom table class", async function () {
+				const weather = generateWeatherForecast();
+				await setup({ template, data: weather });
+
+				await app.client.waitForExist(".weather table.myTableClass", 10000);
+			});
+
+			it("should render colored rows", async function () {
+				const weather = generateWeatherForecast();
+				await setup({ template, data: weather });
+
+				await app.client.waitForExist(".weather table.myTableClass", 10000);
+
+				const rows = await app.client.$$(".weather table.myTableClass tr.colored");
+
+				expect(rows.length).to.be.equal(5);
+			});
 		});
 	});
 });

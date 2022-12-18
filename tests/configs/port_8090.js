@@ -1,11 +1,24 @@
-/* MagicMirror² Test config sample environment set port 8090
+/* Magic Mirror Test config sample environment set port 8090
  *
  * By Rodrigo Ramírez Norambuena https://rodrigoramirez.com
  * MIT Licensed.
  */
-let config = require(process.cwd() + "/tests/configs/default.js").configFactory({
-	port: 8090
-});
+
+var config = {
+	port: 8090,
+	ipWhitelist: ["127.0.0.1", "::ffff:127.0.0.1", "::1"],
+
+	language: "en",
+	timeFormat: 24,
+	units: "metric",
+	electronOptions: {
+		webPreferences: {
+			nodeIntegration: true
+		}
+	},
+
+	modules: []
+};
 
 /*************** DO NOT EDIT THE LINE BELOW ***************/
 if (typeof module !== "undefined") {

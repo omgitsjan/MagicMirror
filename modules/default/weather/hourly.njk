@@ -1,4 +1,7 @@
-{% if hourly %}
+{% if hourly or weatherData %}
+    {% if weatherData %}
+        {% set hourly = weatherData.hours %}
+    {% endif %}
     {% set numSteps = hourly | calcNumEntries %}
     {% set currentStep = 0 %}
     <table class="{{ config.tableClass }}">
@@ -11,15 +14,9 @@
                     {{ hour.temperature | roundValue | unit("temperature") }}
                 </td>
                 {% if config.showPrecipitationAmount %}
-                    {% if hour.precipitationUnits %}	
-                        <td class="align-right bright precipitation">
-                            {{ hour.precipitation }}{{ hour.precipitationUnits }}
-                        </td>			
-		                {% else %}
-                        <td class="align-right bright precipitation">
-                            {{ hour.precipitation | unit("precip") }}
-                        </td>
-                    {% endif %}
+                    <td class="align-right bright precipitation">
+                        {{ hour.precipitation | unit("precip") }}
+                    </td>
                 {% endif %}
             </tr>
             {% set currentStep = currentStep + 1 %}
@@ -27,9 +24,9 @@
     </table>
 {% else %}
     <div class="dimmed light small">
-        {{ "LOADING" | translate }}
+        {{ "LOADING" | translate | safe }}
     </div>
 {% endif %}
 
 <!-- Uncomment the line below to see the contents of the `hourly` object. -->
-<!-- <div style="word-wrap:break-word" class="xsmall dimmed">{{hourly | dump}}</div> -->
+<!-- <div style="word-wrap:break-word" class="xsmall dimmed">{{weatherData | dump}}</div> -->

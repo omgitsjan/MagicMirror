@@ -1,6 +1,6 @@
 /* global WeatherProvider */
 
-/* MagicMirror²
+/* Magic Mirror
  * Module: Weather
  *
  * By Michael Teeuw https://michaelteeuw.nl
@@ -12,10 +12,16 @@ Module.register("weather", {
 		weatherProvider: "openweathermap",
 		roundTemp: false,
 		type: "current", // current, forecast, daily (equivalent to forecast), hourly (only with OpenWeatherMap /onecall endpoint)
+
+		lat: 0,
+		lon: 0,
+		location: false,
+		locationID: false,
 		units: config.units,
-		useKmh: false,
+
 		tempUnits: config.units,
 		windUnits: config.units,
+
 		updateInterval: 10 * 60 * 1000, // every 10 minutes
 		animationSpeed: 1000,
 		timeFormat: config.timeFormat,
@@ -33,25 +39,30 @@ Module.register("weather", {
 		showIndoorHumidity: false,
 		maxNumberOfDays: 5,
 		maxEntries: 5,
-		ignoreToday: false,
 		fade: true,
 		fadePoint: 0.25, // Start on 1/4th of the list.
+
 		initialLoadDelay: 0, // 0 seconds delay
+		retryDelay: 2500,
+
+		apiKey: "",
+		apiSecret: "",
+		apiVersion: "2.5",
+		apiBase: "https://api.openweathermap.org/data/", // TODO: this should not be part of the weather.js file, but should be contained in the openweatherprovider
+		weatherEndpoint: "/weather",
+
 		appendLocationNameToHeader: true,
 		calendarClass: "calendar",
 		tableClass: "small",
+
 		onlyTemp: false,
 		showPrecipitationAmount: false,
 		colored: false,
-		showFeelsLike: true,
-		absoluteDates: false
+		showFeelsLike: true
 	},
 
 	// Module properties.
 	weatherProvider: null,
-
-	// Can be used by the provider to display location of event if nothing else is specified
-	firstEvent: null,
 
 	// Define required scripts.
 	getStyles: function () {
@@ -93,13 +104,15 @@ Module.register("weather", {
 	// Override notification handler.
 	notificationReceived: function (notification, payload, sender) {
 		if (notification === "CALENDAR_EVENTS") {
-			const senderClasses = sender.data.classes.toLowerCase().split(" ");
+			var senderClasses = sender.data.classes.toLowerCase().split(" ");
 			if (senderClasses.indexOf(this.config.calendarClass.toLowerCase()) !== -1) {
-				this.firstEvent = null;
-				for (let event of payload) {
+				this.firstEvent = false;
+
+				for (var e in payload) {
+					var event = payload[e];
 					if (event.location || event.geo) {
 						this.firstEvent = event;
-						Log.debug("First upcoming event with location: ", event);
+						//Log.log("First upcoming event with location: ", event);
 						break;
 					}
 				}
@@ -117,27 +130,24 @@ Module.register("weather", {
 	getTemplate: function () {
 		switch (this.config.type.toLowerCase()) {
 			case "current":
-				return "current.njk";
+				return `current.njk`;
 			case "hourly":
-				return "hourly.njk";
+				return `hourly.njk`;
 			case "daily":
 			case "forecast":
-				return "forecast.njk";
-			//Make the invalid values use the "Loading..." from forecast
+				return `forecast.njk`;
 			default:
-				return "forecast.njk";
+				return `${this.config.type.toLowerCase()}.njk`;
 		}
 	},
 
 	// Add all the data to the template.
 	getTemplateData: function () {
-		const forecast = this.weatherProvider.weatherForecast();
-
 		return {
 			config: this.config,
 			current: this.weatherProvider.currentWeather(),
-			forecast: forecast,
-			hourly: this.weatherProvider.weatherHourly(),
+			forecast: this.weatherProvider.weatherForecast(),
+			weatherData: this.weatherProvider.weatherData(),
 			indoor: {
 				humidity: this.indoorHumidity,
 				temperature: this.indoorTemperature
@@ -150,49 +160,28 @@ Module.register("weather", {
 		Log.log("New weather information available.");
 		this.updateDom(0);
 		this.scheduleUpdate();
-
-		if (this.weatherProvider.currentWeather()) {
-			this.sendNotification("CURRENTWEATHER_TYPE", { type: this.weatherProvider.currentWeather().weatherType.replace("-", "_") });
-		}
-
-		const notificationPayload = {
-			currentWeather: this.weatherProvider?.currentWeatherObject?.simpleClone() ?? null,
-			forecastArray: this.weatherProvider?.weatherForecastArray?.map((ar) => ar.simpleClone()) ?? [],
-			hourlyArray: this.weatherProvider?.weatherHourlyArray?.map((ar) => ar.simpleClone()) ?? [],
-			locationName: this.weatherProvider?.fetchedLocationName,
-			providerName: this.weatherProvider.providerName
-		};
-		this.sendNotification("WEATHER_UPDATED", notificationPayload);
 	},
 
 	scheduleUpdate: function (delay = null) {
-		let nextLoad = this.config.updateInterval;
+		var nextLoad = this.config.updateInterval;
 		if (delay !== null && delay >= 0) {
 			nextLoad = delay;
 		}
 
 		setTimeout(() => {
-			switch (this.config.type.toLowerCase()) {
-				case "current":
-					this.weatherProvider.fetchCurrentWeather();
-					break;
-				case "hourly":
-					this.weatherProvider.fetchWeatherHourly();
-					break;
-				case "daily":
-				case "forecast":
-					this.weatherProvider.fetchWeatherForecast();
-					break;
-				default:
-					Log.error(`Invalid type ${this.config.type} configured (must be one of 'current', 'hourly', 'daily' or 'forecast')`);
+			if (this.config.weatherEndpoint === "/onecall") {
+				this.weatherProvider.fetchWeatherData();
+			} else if (this.config.type === "forecast") {
+				this.weatherProvider.fetchWeatherForecast();
+			} else {
+				this.weatherProvider.fetchCurrentWeather();
 			}
 		}, nextLoad);
 	},
 
 	roundValue: function (temperature) {
-		const decimals = this.config.roundTemp ? 0 : 1;
-		const roundValue = parseFloat(temperature).toFixed(decimals);
-		return roundValue === "-0" ? 0 : roundValue;
+		var decimals = this.config.roundTemp ? 0 : 1;
+		return parseFloat(temperature).toFixed(decimals);
 	},
 
 	addFilters() {
@@ -286,8 +275,8 @@ Module.register("weather", {
 					if (this.config.fadePoint < 0) {
 						this.config.fadePoint = 0;
 					}
-					const startingPoint = numSteps * this.config.fadePoint;
-					const numFadesteps = numSteps - startingPoint;
+					var startingPoint = numSteps * this.config.fadePoint;
+					var numFadesteps = numSteps - startingPoint;
 					if (currentStep >= startingPoint) {
 						return 1 - (currentStep - startingPoint) / numFadesteps;
 					} else {

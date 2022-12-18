@@ -2,18 +2,12 @@
 
 const electron = require("electron");
 const core = require("./app.js");
-const Log = require("logger");
+const Log = require("./logger.js");
 
 // Config
-let config = process.env.config ? JSON.parse(process.env.config) : {};
+var config = process.env.config ? JSON.parse(process.env.config) : {};
 // Module to control application life.
 const app = electron.app;
-// If ELECTRON_DISABLE_GPU is set electron is started with --disable-gpu flag.
-// See https://www.electronjs.org/docs/latest/tutorial/offscreen-rendering for more info.
-if (process.env.ELECTRON_DISABLE_GPU !== undefined) {
-	app.disableHardwareAcceleration();
-}
-
 // Module to create native browser window.
 const BrowserWindow = electron.BrowserWindow;
 
@@ -25,16 +19,14 @@ let mainWindow;
  *
  */
 function createWindow() {
-	let electronSwitchesDefaults = ["autoplay-policy", "no-user-gesture-required"];
-	app.commandLine.appendSwitch(...new Set(electronSwitchesDefaults, config.electronSwitches));
-	let electronOptionsDefaults = {
+	app.commandLine.appendSwitch("autoplay-policy", "no-user-gesture-required");
+	var electronOptionsDefaults = {
 		width: 800,
 		height: 600,
 		x: 0,
 		y: 0,
 		darkTheme: true,
 		webPreferences: {
-			contextIsolation: true,
 			nodeIntegration: false,
 			zoomFactor: config.zoom
 		},
@@ -50,7 +42,7 @@ function createWindow() {
 		electronOptionsDefaults.autoHideMenuBar = true;
 	}
 
-	const electronOptions = Object.assign({}, electronOptionsDefaults, config.electronOptions);
+	var electronOptions = Object.assign({}, electronOptionsDefaults, config.electronOptions);
 
 	// Create the browser window.
 	mainWindow = new BrowserWindow(electronOptions);
@@ -58,30 +50,20 @@ function createWindow() {
 	// and load the index.html of the app.
 	// If config.address is not defined or is an empty string (listening on all interfaces), connect to localhost
 
-	let prefix;
-	if ((config["tls"] !== null && config["tls"]) || config.useHttps) {
+	var prefix;
+	if (config["tls"] !== null && config["tls"]) {
 		prefix = "https://";
 	} else {
 		prefix = "http://";
 	}
 
-	let address = (config.address === void 0) | (config.address === "") ? (config.address = "localhost") : config.address;
+	var address = (config.address === void 0) | (config.address === "") ? (config.address = "localhost") : config.address;
 	mainWindow.loadURL(`${prefix}${address}:${config.port}`);
 
 	// Open the DevTools if run with "npm start dev"
 	if (process.argv.includes("dev")) {
-		if (process.env.JEST_WORKER_ID !== undefined) {
-			// if we are running with jest
-			const devtools = new BrowserWindow(electronOptions);
-			mainWindow.webContents.setDevToolsWebContents(devtools.webContents);
-		}
 		mainWindow.webContents.openDevTools();
 	}
-
-	// simulate mouse move to hide black cursor on start
-	mainWindow.webContents.on("dom-ready", (event) => {
-		mainWindow.webContents.sendInputEvent({ type: "mouseMove", x: 0, y: 0 });
-	});
 
 	// Set responders for window events.
 	mainWindow.on("closed", function () {
@@ -114,12 +96,7 @@ app.on("ready", function () {
 
 // Quit when all windows are closed.
 app.on("window-all-closed", function () {
-	if (process.env.JEST_WORKER_ID !== undefined) {
-		// if we are running with jest
-		app.quit();
-	} else {
-		createWindow();
-	}
+	createWindow();
 });
 
 app.on("activate", function () {
@@ -146,16 +123,9 @@ app.on("before-quit", (event) => {
 	process.exit(0);
 });
 
-/* handle errors from self signed certificates */
-
-app.on("certificate-error", (event, webContents, url, error, certificate, callback) => {
-	event.preventDefault();
-	callback(true);
-});
-
 // Start the core application if server is run on localhost
 // This starts all node helpers and starts the webserver.
-if (["localhost", "127.0.0.1", "::1", "::ffff:127.0.0.1", undefined].includes(config.address)) {
+if (["localhost", "127.0.0.1", "::1", "::ffff:127.0.0.1", undefined].indexOf(config.address) > -1) {
 	core.start(function (c) {
 		config = c;
 	});

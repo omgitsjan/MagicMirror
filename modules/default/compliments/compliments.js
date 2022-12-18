@@ -1,4 +1,4 @@
-/* MagicMirror²
+/* Magic Mirror
  * Module: Compliments
  *
  * By Michael Teeuw https://michaelteeuw.nl
@@ -8,19 +8,25 @@ Module.register("compliments", {
 	// Module config defaults.
 	defaults: {
 		compliments: {
-			anytime: ["Hey there sexy!"],
-			morning: ["Good morning, handsome!", "Enjoy your day!", "How was your sleep?"],
-			afternoon: ["Hello, beauty!", "You look sexy!", "Looking good today!"],
-			evening: ["Wow, you look hot!", "You look nice!", "Hi, sexy!"],
-			"....-01-01": ["Happy new year!"]
+			anytime: ["Hallo, ich bin Jan's SmartMirror!"],
+			morning: ["Guten Morgen, Familie Petry!", "Genieße deinen Tag!", "Habt Ihr gut geschlafen?"],
+			afternoon: ["Guten Tag, Familie Petry!","Wie läuft euer Tag bisher?", "Ich hoffe euer Tag läuft gut!"],
+			evening: ["N'abend", "Ich hoffe euer Tag war gut!", "Schönen Feierbaned!", "Heute war ein produktiver Tag!"],
+			"....-01-01": ["Frohes Neues!"],
+			"....-10-31": ["Happy Halloween!"],
+			"....-11-15": ["Alles Gute zum Geburstag, Jan!"],
+			day_sunny: ["Heute ist ein Sonniger Tag!"],
+			snow: ["Es schneit, es schneit!", "Schneeball schlacht!"],
+			fog: ["Es ist nebelig!", "Passt auf, es ist nebelig!"],
+			rain: ["Es Regnet, nimmt den Regenschirm mit!"]
 		},
-		updateInterval: 30000,
+		updateInterval: 90000,
 		remoteFile: null,
 		fadeSpeed: 4000,
 		morningStartTime: 3,
-		morningEndTime: 12,
-		afternoonStartTime: 12,
-		afternoonEndTime: 17,
+		morningEndTime: 14,
+		afternoonStartTime: 14,
+		afternoonEndTime: 18,
 		random: true,
 		mockDate: null
 	},
@@ -39,35 +45,37 @@ Module.register("compliments", {
 
 		this.lastComplimentIndex = -1;
 
+		var self = this;
 		if (this.config.remoteFile !== null) {
-			this.complimentFile((response) => {
-				this.config.compliments = JSON.parse(response);
-				this.updateDom();
+			this.complimentFile(function (response) {
+				self.config.compliments = JSON.parse(response);
+				self.updateDom();
 			});
 		}
 
 		// Schedule update timer.
-		setInterval(() => {
-			this.updateDom(this.config.fadeSpeed);
+		setInterval(function () {
+			self.updateDom(self.config.fadeSpeed);
 		}, this.config.updateInterval);
 	},
 
-	/**
+	/* randomIndex(compliments)
 	 * Generate a random index for a list of compliments.
 	 *
-	 * @param {string[]} compliments Array with compliments.
-	 * @returns {number} a random index of given array
+	 * argument compliments Array<String> - Array with compliments.
+	 *
+	 * return Number - Random index.
 	 */
 	randomIndex: function (compliments) {
 		if (compliments.length === 1) {
 			return 0;
 		}
 
-		const generate = function () {
+		var generate = function () {
 			return Math.floor(Math.random() * compliments.length);
 		};
 
-		let complimentIndex = generate();
+		var complimentIndex = generate();
 
 		while (complimentIndex === this.lastComplimentIndex) {
 			complimentIndex = generate();
@@ -78,15 +86,15 @@ Module.register("compliments", {
 		return complimentIndex;
 	},
 
-	/**
+	/* complimentArray()
 	 * Retrieve an array of compliments for the time of the day.
 	 *
-	 * @returns {string[]} array with compliments for the time of the day.
+	 * return compliments Array<String> - Array with compliments for the time of the day.
 	 */
 	complimentArray: function () {
-		const hour = moment().hour();
-		const date = this.config.mockDate ? this.config.mockDate : moment().format("YYYY-MM-DD");
-		let compliments;
+		var hour = moment().hour();
+		var date = this.config.mockDate ? this.config.mockDate : moment().format("YYYY-MM-DD");
+		var compliments;
 
 		if (hour >= this.config.morningStartTime && hour < this.config.morningEndTime && this.config.compliments.hasOwnProperty("morning")) {
 			compliments = this.config.compliments.morning.slice(0);
@@ -97,7 +105,7 @@ Module.register("compliments", {
 		}
 
 		if (typeof compliments === "undefined") {
-			compliments = [];
+			compliments = new Array();
 		}
 
 		if (this.currentWeatherType in this.config.compliments) {
@@ -106,7 +114,7 @@ Module.register("compliments", {
 
 		compliments.push.apply(compliments, this.config.compliments.anytime);
 
-		for (let entry in this.config.compliments) {
+		for (var entry in this.config.compliments) {
 			if (new RegExp(entry).test(date)) {
 				compliments.push.apply(compliments, this.config.compliments[entry]);
 			}
@@ -115,13 +123,11 @@ Module.register("compliments", {
 		return compliments;
 	},
 
-	/**
+	/* complimentFile(callback)
 	 * Retrieve a file from the local filesystem
-	 *
-	 * @param {Function} callback Called when the file is retrieved.
 	 */
 	complimentFile: function (callback) {
-		const xobj = new XMLHttpRequest(),
+		var xobj = new XMLHttpRequest(),
 			isRemote = this.config.remoteFile.indexOf("http://") === 0 || this.config.remoteFile.indexOf("https://") === 0,
 			path = isRemote ? this.config.remoteFile : this.file(this.config.remoteFile);
 		xobj.overrideMimeType("application/json");
@@ -134,16 +140,16 @@ Module.register("compliments", {
 		xobj.send(null);
 	},
 
-	/**
+	/* complimentArray()
 	 * Retrieve a random compliment.
 	 *
-	 * @returns {string} a compliment
+	 * return compliment string - A compliment.
 	 */
 	randomCompliment: function () {
 		// get the current time of day compliments list
-		const compliments = this.complimentArray();
+		var compliments = this.complimentArray();
 		// variable for index to next message to display
-		let index;
+		let index = 0;
 		// are we randomizing
 		if (this.config.random) {
 			// yes
@@ -159,16 +165,16 @@ Module.register("compliments", {
 
 	// Override dom generator.
 	getDom: function () {
-		const wrapper = document.createElement("div");
+		var wrapper = document.createElement("div");
 		wrapper.className = this.config.classes ? this.config.classes : "thin xlarge bright pre-line";
 		// get the compliment text
-		const complimentText = this.randomCompliment();
+		var complimentText = this.randomCompliment();
 		// split it into parts on newline text
-		const parts = complimentText.split("\n");
+		var parts = complimentText.split("\n");
 		// create a span to hold it all
-		const compliment = document.createElement("span");
+		var compliment = document.createElement("span");
 		// process all the parts of the compliment text
-		for (const part of parts) {
+		for (var part of parts) {
 			// create a text element for each part
 			compliment.appendChild(document.createTextNode(part));
 			// add a break `
@@ -182,14 +188,34 @@ Module.register("compliments", {
 	},
 
 	// From data currentweather set weather type
-	setCurrentWeatherType: function (type) {
-		this.currentWeatherType = type;
+	setCurrentWeatherType: function (data) {
+		var weatherIconTable = {
+			"01d": "day_sunny",
+			"02d": "day_cloudy",
+			"03d": "cloudy",
+			"04d": "cloudy_windy",
+			"09d": "showers",
+			"10d": "rain",
+			"11d": "thunderstorm",
+			"13d": "snow",
+			"50d": "fog",
+			"01n": "night_clear",
+			"02n": "night_cloudy",
+			"03n": "night_cloudy",
+			"04n": "night_cloudy",
+			"09n": "night_showers",
+			"10n": "night_rain",
+			"11n": "night_thunderstorm",
+			"13n": "night_snow",
+			"50n": "night_alt_cloudy_windy"
+		};
+		this.currentWeatherType = weatherIconTable[data.weather[0].icon];
 	},
 
 	// Override notification handler.
 	notificationReceived: function (notification, payload, sender) {
-		if (notification === "CURRENTWEATHER_TYPE") {
-			this.setCurrentWeatherType(payload.type);
+		if (notification === "CURRENTWEATHER_DATA") {
+			this.setCurrentWeatherType(payload.data);
 		}
 	}
 });
