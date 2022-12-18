@@ -58,18 +58,18 @@ Temporary Items
 .directory
 .Trash-*
 
-# Ignore all modules except the default modules.
-/modules/**
-!/modules/default
-!/modules/default/**
-!/modules/README.md**
+# Ignore all modules except the default modules. (I want to save my addition modules)
+# /modules/**
+# !/modules/default
+# !/modules/default/**
+# !/modules/README.md**
 
-# Ignore changes to the custom css files.
-/css/custom.css
+# Ignore changes to the custom css files. (I want to save my css)
+#/css/custom.css
 
-# Ignore users config file but keep the sample.
-/config/*
-!/config/config.js.sample
+# Ignore users config file but keep the sample. (I want to save my config, but I removed the critical part where API keys or etc. and so on could be leaked)
+# /config/*
+# !/config/config.js.sample
 
 # Vim
 ## swap

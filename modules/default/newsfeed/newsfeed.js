@@ -29,7 +29,7 @@ Module.register("newsfeed", {
 		reloadInterval: 5 * 60 * 1000, // every 5 minutes
 		updateInterval: 10 * 1000,
 		animationSpeed: 2.5 * 1000,
-		maxNewsItems: 0, // 0 for unlimited
+		maxNewsItems: 10, // 0 for unlimited
 		ignoreOldItems: false,
 		ignoreOlderThan: 24 * 60 * 60 * 1000, // 1 day
 		removeStartTags: "",
