@@ -97,7 +97,7 @@ var config = {
 			config: {
 				location: "Trier",
 				locationID: "2821164", //ID from http://bulk.openweathermap.org/sample/city.list.json.gz; unzip the gz file and find your city
-				appid: ""
+				appid: "",
 				units: "metric",
 				showWindDirection: true,
 				showWindSpeed: true
