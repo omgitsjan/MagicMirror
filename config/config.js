@@ -110,7 +110,7 @@ var config = {
 			config: {
 				location: "Trier",
 				locationID: "2821164", //ID from http://bulk.openweathermap.org/sample/city.list.json.gz; unzip the gz file and find your city
-				appid: "a1ad50607b42d0d2e76e165fa17938a3"
+				appid: ""
 			}
 		},
 		{
