@@ -73,7 +73,7 @@ var config = {
 			config: {
 				compliments: {
 					anytime: ["Hallo, ich bin Jan's SmartMirror!"],
-					morning: ["Guten Morgen!", "Genieße deinen Tag!", "Hast du gut geschlafen?", "Ich hoffe du bist gut ausgeschlafen!"],
+					morning: ["Guten Morgen!", "Genieße deinen Tag!", "Hast du gut geschlafen?", "Ich hoffe du bist gut ausgeschlafen!", "Ich hoffe du hast einen guten Start in den Tag!"],
 					afternoon: ["Guten Tag!", "Wie läuft dein Tag bisher?", "Ich hoffe dein Tag läuft gut!", "Ich hoffe du hast einen produktiven Tag!"],
 					evening: ["N'abend", "Ich hoffe dein Tag war gut!", "Schönen Feierabend!", "Ich hoffe heute war ein produktiver Tag!", "Ich hoffe du hattest einen schönen Tag!"],
 					"....-01-01": ["Frohes Neues Jahr!", "Ich hoffe du hattest einen guten Start ins neue Jahr!", "Happy New Year!", "Auf ein gutes neues Jahr!"],
@@ -85,7 +85,7 @@ var config = {
 					fog: ["Es ist nebelig!", "Passt auf, es ist nebelig!", "Ich hoffe du bist vorsichtig bei dem nebligen Wetter!"],
 					rain: ["Es regnet, nimmt den Regenschirm mit!", "Ich hoffe du bist trocken bei dem Regen!"]
 				},
-				updateInterval: 30000,
+				updateInterval: 32000,
 				morningEndTime: 12,
 				afternoonStartTime: 12,
 				afternoonEndTime: 17
@@ -98,16 +98,19 @@ var config = {
 				location: "Trier",
 				locationID: "2821164", //ID from http://bulk.openweathermap.org/sample/city.list.json.gz; unzip the gz file and find your city
 				appid: ""
+				units: "metric",
+				showWindDirection: true,
+				showWindSpeed: true
 			}
 		},
 		{
 			module: "weatherforecast",
 			position: "top_right",
-			header: "Weather Forecast",
+			header: "Wettervorhersage",
 			config: {
 				location: "Trier",
 				locationID: "2821164", //ID from http://bulk.openweathermap.org/sample/city.list.json.gz; unzip the gz file and find your city
-				appid: ""
+				appid: "a1ad50607b42d0d2e76e165fa17938a3"
 			}
 		},
 		{
@@ -135,33 +138,33 @@ var config = {
 			position: "top_right",
 			config: {
 				fiat: "usd", // 'usd' and 'eur' available, defaults to 'usd'
-				showBefore: "BTC", // will display before the bitcoin price, default 'Bitstamp'
+				showBefore: "1 BTC ≈ ", // will display before the bitcoin price, default 'Bitstamp'
 				updateInterval: 60000 // update interval in milliseconds
 			}
-		},
-		{
-			module: "MMM-COVID19-AMPEL",
-			position: "bottom_bar",
-			config: {
-				header: "COVID-19 Inzidenzwert", // Header Title of Display on MagicMirror
-				cityID: ["154", "158"], // City ID from  https://npgeo-corona-npgeo-de.hub.arcgis.com/datasets/917fc37a709542548cc3be077a786c17_0/data
-				infoRowClass: "small", // small, medium
-				showUpdateDateInHeader: true, //Show update date in header
-				showUpdateDateInRow: false, //Show update date in each row
-				showStatusLightLeft: true, //Show left status light
-				showStatusLightRight: true, // Show right status light
-				showTitle: true, //Show Title row with headlines if you want to display more than one information
-				showSKLK: true, //Show the Region information if the Pace displayed is the city or regional area (Stadt or Land)
-				showCases: true, //Show amount of active cases in city
-				showCasesPerPeople: true, //Show Percentage of active cases per inhabitant
-				showDeathRatePerPeople: true, //show death rate in % of infected people
-				show7DayIncidence: true, // Show 7 day incidence value for your location
-				landModeOnly: false, // Shows Bundesland instead of City in Bundesland (Thos who want to display only the Bundesland)
-				numberOfDigits: 2, //Round the Percentage and incidence value to number of digits
-				updateInterval: 3600000, // update interval in milliseconds // 1 Hour - Values are only refreshed every 24 H on Server
-				fadeSpeed: 4000
-			}
 		}
+		// {
+		// 	module: "MMM-COVID19-AMPEL",
+		// 	position: "bottom_bar",
+		// 	config: {
+		// 		header: "COVID-19 Inzidenzwert", // Header Title of Display on MagicMirror
+		// 		cityID: ["154", "158"], // City ID from  https://npgeo-corona-npgeo-de.hub.arcgis.com/datasets/917fc37a709542548cc3be077a786c17_0/data
+		// 		infoRowClass: "small", // small, medium
+		// 		showUpdateDateInHeader: true, //Show update date in header
+		// 		showUpdateDateInRow: false, //Show update date in each row
+		// 		showStatusLightLeft: true, //Show left status light
+		// 		showStatusLightRight: true, // Show right status light
+		// 		showTitle: true, //Show Title row with headlines if you want to display more than one information
+		// 		showSKLK: true, //Show the Region information if the Pace displayed is the city or regional area (Stadt or Land)
+		// 		showCases: true, //Show amount of active cases in city
+		// 		showCasesPerPeople: true, //Show Percentage of active cases per inhabitant
+		// 		showDeathRatePerPeople: true, //show death rate in % of infected people
+		// 		show7DayIncidence: true, // Show 7 day incidence value for your location
+		// 		landModeOnly: false, // Shows Bundesland instead of City in Bundesland (Thos who want to display only the Bundesland)
+		// 		numberOfDigits: 2, //Round the Percentage and incidence value to number of digits
+		// 		updateInterval: 3600000, // update interval in milliseconds // 1 Hour - Values are only refreshed every 24 H on Server
+		// 		fadeSpeed: 4000
+		// 	}
+		// }
 	]
 };
 

@@ -20,6 +20,7 @@
   --gap-body-left: 60px;
 
   --gap-modules: 30px;
+  --gap-modules-large: 45px;
 }
 
 html {
@@ -139,6 +140,10 @@ sup {
 
 .module {
   margin-bottom: var(--gap-modules);
+}
+
+.module.MMM-NowPlayingOnSpotify {
+  margin-top: var(--gap-modules-large);
 }
 
 .module.hidden {
